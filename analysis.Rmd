@@ -23,7 +23,7 @@ summary(cars)
 
 Este conjunto de datos contiene información de una muestra extraída a partir de un censo estadounidense, en el que para
 cada persona (sin datos personales), se registran los salarios aparte de información personal adicional. El conjunto de datos contiene
-32.560 registros y 14 variables.
+32.560 registros y 15 variables.
 
 
 Las variables de esta muestra son:
@@ -31,17 +31,20 @@ Las variables de esta muestra son:
 • Workclass: Categorización del individuo en base al perfil laboral.
 • fnlwgt: Peso asignado a cada fila, refleja la proporción de datos que se asimilan dentro de la misma línea (misma información)
 • Education: Nivel de formación educativa del individuo.
-• Education_num: Número de años de formación educativa del individuo.
-• Marital_status: Estado civil del individuo.
+• Education.num: Número de años de formación educativa del individuo.
+• Marital.status: Estado civil del individuo.
 • Occupation: Categorización del individuo en base a la tipología de trabajo.
 • Relationship: Estado civil del individuo (a diferencia de marital_status, también hace referencia a hijos)
 • Race: Grupo racial al que pertenece el individuo.
 • Sex: Género del individuo.
-• capital_gain: Ganancias capitales del individuo k€.
-• capital_loss: Pérdidas capitales del individuo k€.
-• native_country: País de procedencia del individuo
-• hours_per_week: Horas por semana trabajadas por el individuo.
-• income: Salario (anual) del individuo, en k€.
+• capital.gain: Ganancias capitales del individuo €.
+• capital.loss: Pérdidas capitales del individuo €.
+• native.country: País de procedencia del individuo
+• hours.per.week: Horas por semana trabajadas por el individuo.
+• income: Salario (anual) del individuo, en k€, hace referencia a un umbral de salario.
+
+
+Vamos a cargar el dataset para un primer vistazo de las variables.
 
 ```{r cars}
 adult<-read.delim("./adult.csv", header = TRUE, sep = ",", dec 
@@ -49,6 +52,12 @@ adult<-read.delim("./adult.csv", header = TRUE, sep = ",", dec
 head(adult)
 
 ```
+
+La idea original del dataset es analizar y predecir cuáles de dichas variables del censo tienen impacto en la probabilidad de que el individuo gane
+o no más de 50K de salario anual.
+Si bien el objetivo de la práctica no es específicamente la predicción de probabilidades, la cantidad de variables nos va a permitir realizar el 
+preprocesado de los datos (tanto dentro de las propias variables como eligiendo qué variables son necesarias para el estudio), así como un 
+análisis de la relevancia de dichas variables.  
 
 
 
