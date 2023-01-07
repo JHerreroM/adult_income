@@ -19,12 +19,37 @@ When you click the **Knit** button a document will be generated that includes bo
 summary(cars)
 ```
 
-## Including Plots
+## 1.- Descripción del DataSet
 
-You can also embed plots, for example:
+Este conjunto de datos contiene información de una muestra extraída a partir de un censo estadounidense, en el que para
+cada persona (sin datos personales), se registran los salarios aparte de información personal adicional. El conjunto de datos contiene
+32.560 registros y 14 variables.
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+
+Las variables de esta muestra son:
+• Age: Edad del individuo.
+• Workclass: Categorización del individuo en base al perfil laboral.
+• fnlwgt: Peso asignado a cada fila, refleja la proporción de datos que se asimilan dentro de la misma línea (misma información)
+• Education: Nivel de formación educativa del individuo.
+• Education_num: Número de años de formación educativa del individuo.
+• Marital_status: Estado civil del individuo.
+• Occupation: Categorización del individuo en base a la tipología de trabajo.
+• Relationship: Estado civil del individuo (a diferencia de marital_status, también hace referencia a hijos)
+• Race: Grupo racial al que pertenece el individuo.
+• Sex: Género del individuo.
+• capital_gain: Ganancias capitales del individuo k€.
+• capital_loss: Pérdidas capitales del individuo k€.
+• native_country: País de procedencia del individuo
+• hours_per_week: Horas por semana trabajadas por el individuo.
+• income: Salario (anual) del individuo, en k€.
+
+```{r cars}
+adult<-read.delim("./adult.csv", header = TRUE, sep = ",", dec 
+= ".")
+head(adult)
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+
