@@ -6,13 +6,28 @@ output:
     pdf_document:
       toc: true
       number_sections: true
+bibliography: referencias.bib 
 header-includes: 
    - \usepackage[spanish]{babel}
+   - \usepackage{lscape}
+   - \newcommand{\blandscape}{\begin{landscape}}
+   - \newcommand{\elandscape}{\end{landscape}}
+
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, fig.pos = 'H')
+
+list.of.packages <- c("ggplot2", "nortest", "forcats", "gridExtra", "kableExtra")
+
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+lapply(list.of.packages, require, character.only = TRUE)
+
 ```
+
+\newpage
 
 # Detalles de la actividad
 
@@ -28,7 +43,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Descripción del DataSet
 
 Este conjunto de datos contiene información de una muestra extraída a partir de un censo estadounidense, en el que para
-cada persona (sin datos personales), se registran los salarios aparte de información personal adicional. Los datos han sido obtenidos en el sitio web de [Kaggle](https://www.kaggle.com/datasets/wenruliu/adult-income-dataset). El conjunto de datos contiene 32.560 registros y 15 variables y se encuentra en formato `.csv`, bajo el nombre `adult.csv`
+cada persona (sin datos personales), se registran los salarios aparte de información personal adicional. Los datos han sido obtenidos en el sitio web de [Kaggle](https://www.kaggle.com/datasets/wenruliu/adult-income-dataset). Los datos proceden de la publicación de @kohavi-nbtree, que fueron obtenidas desde la oficina del censo de EEUU (US Census Bureau) en el año 1996.  El conjunto de datos contiene 32.560 registros y 15 variables y se encuentra en formato `.csv`, bajo el nombre `adult.csv`
 
 Las variables de esta muestra son:
 
@@ -115,7 +130,7 @@ Con los datos perdidos podemos realizar varias acciones:
 * Etiquetado: Simplemente podríamos asignarles una etiqueta y analizarlos como una categoría más 
 * Reemplazarlos por una medida de distribución central: podríamos reemplazarlos por la mediana. El problema es que los datos perdidos se agrupan en nuestro caso dentro de variables categóricas, por lo que podríamos sustituirlo en este caso por la moda. 
 * Imputarlos: es decir, estimar la probabilidad en función a las otras variables de a qué categoría pertence el dato en concreto. 
-* Omitirlos: es decir, eliminar aquellos registros que contengan datos perdidos
+* Omitirlos: es decir, eliminar aquellos registros que contengan datos perdidos o eliminar las columnas que contengan dichos registros. 
 
 De cara a imputarlos o no habría que determinar cuál es el mecanismo de generación de los datos perdidos:
 
@@ -125,4 +140,294 @@ De cara a imputarlos o no habría que determinar cuál es el mecanismo de genera
 
 * Perdidos no aleatorios (MNAR por sus siglas en inglés): en este caso no sabemos el mecanismo por el que los datos se encuentran perdidos, y este no es debido al azar, por lo que no podemos de hecho deducir las categorias 
 
+Si examinamos como se comportan las variables con datos perdidos en función de la variable `income`
 
+```{r, fig.align='center', fig.cap='Datos de tipo de trabajo y salario. Se aprecia que los datos perdidos se agrupan más en la categoría de <=50k, por lo que no es totalmente aleatorio. Podríamos decir que los datos perdidos son del tipo MAR, por lo que podemos realizar la imputación de los datos. Esto ocurre también con el resto de las variables, pues es posible que exista un sesgo en el que los encuestados con menor salario tiendan a responder menos a determinados items.', out.width='75%', echo=FALSE}
+
+# Representamos los datos
+
+ggplot(df, aes(workclass, fill = workclass))+
+  geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), position = "dodge")+
+  scale_y_continuous("Percentage", labels = scales::percent)+
+  facet_grid(~income)+
+  theme_classic()+
+  theme(legend.position = "none", 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+```
+
+Para este caso concreto analizaremos los datos perdidos como una categoría más de los datos, sin llegar a eliminarla. Si en el futuro para el desarrollo de un modelo necesitamos que no existan valores perdidos lo imputaremos 
+
+## Detección de valores extremos (outliers)
+
+Podemos examinar dentro de las variables cuantitativas si existen datos que podrían ser considerados outliers. Podemos usar el criterio de considerar aquellas observaciones 2 veces por encima de la desviación standar como outliers.
+
+```{r}
+# Seleccionamos las variables numéricas
+numericas = names(df)[sapply(df, is.numeric)]
+
+# Escalamos los datos numéricos
+df_num = data.frame(lapply(df[,numericas], scale))
+
+# Transformamos el dataframe a la forma larga
+df_res = reshape(df_num, varying = list(names(df_num)), times =names(df_num),
+                 v.names = "value", timevar = "variable", direction = "long")
+```
+
+En la figura 2 podemos ver la representación de los registros que sobrepasan las 2 desviaciones estandar. También podemos examinar cuales son estos datos y si tienen sentido, por ejemplo cogiendo las horas trabajadas y la edad
+
+```{r}
+# Con este comando podríamos seleccionar los outliers de la edad
+# boxplot.stats(df$age)$out
+# Sin embargo son muchos registros, por lo que solo seleccionamos el máximo
+max(df$age)
+
+max(df$hours.per.week)
+```
+
+Podemos ver que la edad máxima es `r max(df$age)` que puede tener sentido si estamos hablando de una encuesta, aunque estos encuestados realmente no se encuentran en edad de trabajar. Si consideramos las horas trabajadas por semana vemos que existen algunos registros algo incongruentes pues hay individuos que refieren trabajar hasta `r max(df$hours.per.week)`, lo cual excede el máximo de horas semanales permitidas en España, y si contamos que al menos una persona debe de dormir un mínimo de 6 horas diarias, sería estar trabajando un `r round(max(df$hours.per.week)/((24-6)*7)*100, 2)`% del tiempo que una persona está despierta en una semana. Sin embargo supondremos que esto es correcto, pues contiene los datos de muchos países que puede que sean reales.
+
+
+```{r, fig.align='center', fig.cap='Outliers. Se aprecian los datos escalados para las variables cuantitativas. Las líneas rojas discontinuas representan 2 veces la desviación estandar de la media. Se aprecia que existen muchos registros que podrían ser considerados outliers, especialmente dentro de la variable `fnlwgt`.', out.width='75%', echo=FALSE}
+# Representamos los datos
+ggplot(df_res, aes(x = variable, y = value))+
+  geom_hline(yintercept = c(-2,2), color="Red", linetype = 2)+
+  geom_boxplot()+
+  labs(x=NULL, y=NULL)+
+  theme_minimal()
+
+```
+## Descripción de los valores
+
+### Valores numéricos
+
+Podemos realizar un breve descriptivo de los valores numéricos presentes en los datos con el comando summary
+
+```{r}
+# Llamamos a la función summary
+
+summary(df[,numericas])
+```
+Vemos que la edad media es `r mean(df$age)`, presentando valores que van desde `r min(df$age)` a `r max(df$age)`. Podemos apreciar en la tabla anterior otros parámetros, lo cual nos da cierta informacion a priori sobre las distribuciones de los datos. Por ejemplo vemos que el valor mínimo, la mediana y el 3er cuartil de `capital.gain` y `capital.loss` se encuentran en el 0. Esto debe de ser porque son variables muy asintóticas. Por el contrario vemos que los datos de `hours.per.week` se encuentran en torno a la cifra de 40, lo que indica que presentará una distribución muy leptocúrtica. 
+
+Podemos representar las distribuciones de los datos para ver como se distribuyen
+
+```{r, fig.align='center', fig.cap='Distribución de los datos numéricos. Se aprecia que los datos de la edad podrían ser normales, aunque se encuentran truncados por debajo de los 18 años. Los datos de educación se encuentran entre 8 y 9 en la mayoría de los casos, así como vemos que en las horas por semana en casi todos los casos se encuentran en 40 horas semanales. La perdida y ganacia de capital se encuentra en 0 en casi todos los casos.', out.width='75%', echo=FALSE, results='hide'}
+
+# Creamos una función para representar los datos
+plot_hist<-function(x) {
+  hist(df[,x], main = x, xlab = x)
+}
+
+# Generamos una matriz para la representación 
+par(mfrow=c(2,3))
+lapply(numericas, plot_hist)
+par(mfrow=c(1,1))
+
+```
+
+Podemos a continuación aplicar un test de normalidad para cada una de las variables numéricas. Normalmente podríamos emplear el test de Shapiro-Wilk para normalidad, que es un test robusto. Este test se puede llamar en R mediante la función `shapiro.test`. Sin embargo, dado que tenemos más de 5000 observaciones, el test no está implementado en R y debemos acogernos a otras opciones. Entre ellas se encuentra el test de Anderson-Darling. En este test, al igual que en el test de Shapiro-WIlk la hipótesis nula es que los datos presentan una distribución normal. El test de Anderson-Darling se encuentra implementado en el paquete `nortest` mediante la función `ad.test`
+
+```{r}
+# Aceptamos como significativo un alpha inferior a 0.05
+alpha = .05
+
+testear = function (test, pos){
+# Generamos una función para representar la no normalidad
+  for (i in 1:length(numericas)) {
+    
+    # Cambiamos los strings
+    if (pos == ">") {text2 = "SÍ"}
+    if (pos == "<") {text2 = "NO"}
+    
+    # Seleccionamos el nombre de la variable que deseamos
+    vari = numericas[i]
+    
+    # Si en el test especificamos normal, entonces se calculan los test 
+    # de normalidad de Anderson Darling
+    if (test == "normal") {
+      texto = "normales"
+      p_val = ad.test(df[,vari])$p.value 
+    }
+    if (test == "homocedasticidad"){
+      texto = "homocedásticas"
+      p_val = fligner.test(df[,vari], df[["income"]])$p.value
+    }
+    if (i == 1) cat(paste0("Variables que ", text2," son ", texto, ":\n"), 
+                  "------------------------------------------------\n") 
+    
+    if (get(pos)(p_val,alpha)) {
+      cat(vari)
+    if (i < length(numericas)) cat(", ")
+    if (i %% 3 == 0) cat("\n")}
+  }
+}
+
+# Llamamos a la función que hemos especificado con anterioridad
+testear("normal","<")
+testear("normal",">")
+
+```
+
+Podemos ver que en todas las variables rechazamos la hipótesis de normalidad en todas las variables
+
+Si repetimos el mismo proceso para la homocedasticidad, aplicaremos el test de Fligner, en el que la hipótesis nula es que entre los diferentes grupos las varianzas son constantes. Los grupos en este caso estarán definidos por la variable `income` que es la que deseamos predecir
+
+```{r}
+# Llamamos a la función previamente especificada
+testear("homocedasticidad","<")
+testear("homocedasticidad",">")
+```
+Podemos ver por lo tanto que todos las variables numéricas no son normales y no son homocedásticas, por lo que tendremos que usar test no paramétricos para el estudio de las variables
+
+### Valores categóricos
+
+Podemos realizar un breve descriptivo de los valores categóricos presentes en los datos con el comando summary
+
+```{r}
+
+# Seleccionamos las variables no numericas
+non_num = names(df)[!names(df)%in%numericas]
+
+# Llamamos a la función summary de estas variables
+summary(df[,non_num])
+```
+
+En este caso solo podemos ver las frecuencias de los datos, aunque vemos que los datos se encuentran muy disbalanceados. Por eemplo vemos que la mayoría de los casos `workclass` es `Private`, que está centrado en EEUU, hombres y con un `income` inferior a 50K. Respecto a su estado marital vemos que tenemos muchos que nunca se han casado 
+
+Podemos realizar a continuación una breve representación gráfica de los datos, tal como se aprecia en la figura 4, comprobando que se cumplen los datos de los que hablamos con anterioridad
+
+
+```{r, echo=FALSE, fig.align='center', fig.width=10, fig.height=10, fig.cap= 'Gráfico de barras de las variables categóricas'}
+
+bar_plot = function (var) {
+
+    p = ggplot(df, aes(x =fct_infreq(!!sym(var)), fill = !!sym(var)))+
+        geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), position = "dodge")+
+        scale_y_continuous("Percentage", labels = scales::percent, limits = c(0,1))+
+        xlab(var)+
+        theme_minimal()+
+        coord_flip()+
+        theme(legend.position = "none")
+    
+  return(p)}
+
+plist = lapply(non_num[non_num!="native.country"], bar_plot)
+
+do.call("grid.arrange", c(plist, ncol = 3))
+
+```
+
+## Análisis univariante
+
+Una vez conocidas las variables y sus distribuciones, podemos ver cual es la relación de estas variables con los datos de los ingresos y ver si existe alguna variable que se relacione de forma significativa con los ingresos. Separaremos el análisis por variables cuantitativas y variables cuantitativas. 
+
+### Variables cuantitativas
+
+Podemos hacer un análisis gráfico para ver si existen diferencias en alguna variable, realizando este análisis gráfico mediante boxplots, tal como se ve en la figura 5.
+
+```{r,  fig.align='center', fig.cap='Boxplot de las variables cuantitativas respecto a income. Visualmente parece que la gente más mayor es la que tiene salarios más altos, también los que han estudiado más años y los que trabajan más horas por semana', out.width='75%', echo=FALSE}
+boxplot_cust = function (var) {
+  ggplot(df, aes(x = income, y = !!sym(var), fill = income))+
+  geom_boxplot()+
+  scale_fill_brewer(palette="Dark2")+
+  theme_minimal()+
+  theme(legend.position="none")
+}
+
+plist = lapply(numericas, boxplot_cust)
+do.call("grid.arrange", c(plist, ncol = 3))
+```
+
+Sin embargo para el análisis es necesaria la realización de tests estadísticos. En este caso como sabemos que las variables no son normales y además no se cumple la hipótesis de la homocedasticidad, debemos usar test no paramétricos. Para la comparación de dos muestras podríamos usar el test de Wilcoxon. Para representar los datos podemos realizar una tabla en la que mostremos la mediana y rango intercuartílico de cada una de las variables junto al valor de p correspondiente. 
+
+```{r}
+
+# Creamos una función para el rango intercuartílico
+valor = function (x){
+  q = quantile(x, c(0.25, 0.5, 0.75))
+  return (paste0(q[2], " [", q[1], ";", q[3], "]"))
+}
+
+# Generamos una tabla con el rango y la mediana
+tabla = data.frame(t(do.call(cbind, lapply(numericas, 
+                        function (x) tapply(df[[x]], df[["income"]], valor)))))
+
+# Calculamos los valores de p del test de wilcoxon
+p = do.call(rbind, lapply(numericas, 
+       function (x) as.vector(pairwise.wilcox.test(df[[x]], df$income)$p.value)))
+
+# Unimos las dos tablas
+tabla = cbind(tabla, round(p, 3))
+tabla[,3]<-ifelse(tabla[,3]==0, "<0.01", tabla[,3])
+rownames(tabla)<-numericas
+colnames(tabla)<-c(levels(df$income), "p valor")
+```
+
+Podemos ver que todas las variables estudiadas en este caso muestran diferencias estadísticamente significativas (tabla 1), si bien llama la atención que existan diferencias en variables como `capital.gain` y `capital.loss` en las que presentan una distribución en torno al 0. Probablemente las diferencias en estos grupos se justifiquen por los outliers, tal como se puede apreciar en los boxplots realizados con anterioridad
+
+```{r, echo =FALSE}
+kable(tabla, booktabs = T, align = "c", 
+      caption = "Tabla de mediana, rango intercuartílico, junto con los valores de p")%>%
+  kable_styling(latex_options = 'HOLD_position')
+```
+
+### Variables cualitativas
+
+Para el estudio de las variables cualitativas podemos realizar de nuevo una representación gráfica, para ver si existen diferencias entre los grupos, para posteriormente realizar los contrastes correspondientes. No mostraremos los porcentajes por cada una de las categorías ya que hay en muchos casos en los que existen variables con muchos grupos. 
+
+Esto se puede apreciar claramente en la gráfica 6, donde podemos ver que los hombres blancos con mayor educación y que son autonomos, o que son los maridos, tienen una mayor probabilidad de ganar más de 50 K. 
+
+De cara a la realización del análisis estadístico es necesario realizar un test de $\chi^2$ (chi cuadrado), si bien si en alguna de las casillas existe algún valor 
+
+```{r, echo=FALSE, fig.align='center', fig.width=10, fig.height=12, fig.cap= 'Gráfico de barras de las variables categóricas. En verde se muestran los encuestados que ganan <=50K y en marrón los que ganan más de 50K', warning=FALSE}
+
+barplot_group = function (var) {
+  ggplot(df, aes(x = fct_infreq(!!sym(var)), fill = income))+
+  geom_bar(aes(y = ..count../tapply(..count.., ..fill.., sum)[..fill..]),
+           position ="dodge")+
+  geom_text(aes(y=..count../tapply(..count.., ..fill.. ,sum)[..fill..], 
+                 label=scales::percent(round(..count../tapply(..count.., ..fill.. ,sum)[..fill..], 2))),
+            stat="count", position=position_dodge(0.9), hjust=-0.2)+
+  ylab('Porcentaje') +
+  scale_fill_brewer(palette="Dark2")+
+  xlab(var)+
+  scale_y_continuous(labels = scales::percent, limits = c(0,1))+
+  theme_minimal()+
+  theme(legend.position = "none")+
+  coord_flip()
+  
+}
+
+plist = lapply(non_num[!non_num%in%c("native.country", "sex", "income")], barplot_group)
+
+n <- length(plist)
+nCol <- floor(sqrt(n))
+
+do.call("grid.arrange", c(plist, ncol = nCol))
+
+```
+
+
+```{r, echo=FALSE, fig.align='center', out.width='50%', fig.cap= 'Gráfico de barras del sexo. Se aprecia la brecha salarial debida al género, en la que el 85\\% de los que ganan >50K son hombres, mientras que solo el 15\\% de las mujeres lo son'}
+
+ggplot(df, aes(x = fct_infreq(sex), fill = income))+
+  geom_bar(aes(y = ..count../tapply(..count.., ..fill.., sum)[..fill..]),
+           position ="dodge")+
+  geom_text(aes(y=..count../tapply(..count.., ..fill.. ,sum)[..fill..], 
+                 label=scales::percent(round(..count../tapply(..count.., ..fill.. ,sum)[..fill..], 2))),
+            stat="count", position=position_dodge(0.9), vjust=-0.4)+
+  ylab('Porcentaje')+
+  scale_fill_brewer(palette="Dark2")+
+  xlab("sex")+
+  scale_y_continuous(labels = scales::percent, limits = c(0,1))+
+  theme_minimal()+
+  theme(legend.position = "none")
+```
+
+
+
+
+# Bibliografía
+
+<div id="refs"></div>
