@@ -25,6 +25,7 @@ if(length(new.packages)) install.packages(new.packages)
 
 lapply(list.of.packages, require, character.only = TRUE)
 
+
 ```
 
 \newpage
@@ -141,6 +142,7 @@ De cara a imputarlos o no habría que determinar cuál es el mecanismo de genera
 * Perdidos no aleatorios (MNAR por sus siglas en inglés): en este caso no sabemos el mecanismo por el que los datos se encuentran perdidos, y este no es debido al azar, por lo que no podemos de hecho deducir las categorias 
 
 Si examinamos como se comportan las variables con datos perdidos en función de la variable `income`
+<<<<<<< HEAD
 
 ```{r, fig.align='center', fig.cap='Datos de tipo de trabajo y salario. Se aprecia que los datos perdidos se agrupan más en la categoría de <=50k, por lo que no es totalmente aleatorio. Podríamos decir que los datos perdidos son del tipo MAR, por lo que podemos realizar la imputación de los datos. Esto ocurre también con el resto de las variables, pues es posible que exista un sesgo en el que los encuestados con menor salario tiendan a responder menos a determinados items.', out.width='75%', echo=FALSE}
 
@@ -378,7 +380,59 @@ Para el estudio de las variables cualitativas podemos realizar de nuevo una repr
 
 Esto se puede apreciar claramente en la gráfica 6, donde podemos ver que los hombres blancos con mayor educación y que son autonomos, o que son los maridos, tienen una mayor probabilidad de ganar más de 50 K. 
 
-De cara a la realización del análisis estadístico es necesario realizar un test de $\chi^2$ (chi cuadrado), si bien si en alguna de las casillas existe algún valor 
+De cara a la realización del análisis estadístico es necesario realizar un test de $\chi^2$ (chi cuadrado), si bien si en alguna de las casillas existe algún valor inferior a 5 se aplicará el test de fisher
+
+
+```{r}
+
+# Creamos una función que realice el contraste de hipótesis
+test_hipo = function (var){
+  # Creamos en primer lugar una tabla
+  tab = table(df[[var]], df[["income"]])
+  
+  # Si algún valor vale menos de 5 entonces aplicaremos el test de Fisher
+  if (any(tab<5)){
+    p = fisher.test(tab, simulate.p.value = T)$p.value
+  }else{
+    # De lo contrario aplicaremos el test de Chi Cuadrado
+    p = chisq.test(tab, simulate.p.value = T)$p.value
+  }
+  # Redondeamos los resultados
+  p = round(p, 3)
+  p = ifelse(p ==0, "<0.01", p)
+  
+  return(p)
+}
+
+# Generamos la tabla 
+resultado = data.frame(do.call(rbind, lapply(non_num[non_num!="income"], test_hipo)))
+rownames(resultado)<-non_num[non_num!="income"]
+colnames(resultado) = "p valor"
+```
+
+```{r, echo =FALSE}
+kable(resultado, booktabs = T, align = "c", 
+      caption = "Tabla de los valores de p para las variables cualitativas. 
+      Se aprecia que son todas significativas")%>%
+  kable_styling(latex_options = 'HOLD_position')
+```
+
+```{r, echo=FALSE, fig.align='center', out.width='50%', fig.cap= 'Gráfico de barras del sexo. Se aprecia la brecha salarial debida al género, en la que el 85\\% de los que ganan >50K son hombres, mientras que solo el 15\\% de las mujeres lo son', warning=FALSE}
+
+ggplot(df, aes(x = fct_infreq(sex), fill = income))+
+  geom_bar(aes(y = ..count../tapply(..count.., ..fill.., sum)[..fill..]),
+           position ="dodge")+
+  geom_text(aes(y=..count../tapply(..count.., ..fill.. ,sum)[..fill..], 
+                 label=scales::percent(round(..count../tapply(..count.., ..fill.. ,sum)[..fill..], 2))),
+            stat="count", position=position_dodge(0.9), vjust=-0.4)+
+  ylab('Porcentaje')+
+  scale_fill_brewer(palette="Dark2")+
+  xlab("sex")+
+  scale_y_continuous(labels = scales::percent, limits = c(0,1))+
+  theme_minimal()+
+  theme(legend.position = "none")
+```
+
 
 ```{r, echo=FALSE, fig.align='center', fig.width=10, fig.height=12, fig.cap= 'Gráfico de barras de las variables categóricas. En verde se muestran los encuestados que ganan <=50K y en marrón los que ganan más de 50K', warning=FALSE}
 
@@ -405,25 +459,10 @@ n <- length(plist)
 nCol <- floor(sqrt(n))
 
 do.call("grid.arrange", c(plist, ncol = nCol))
-
 ```
 
+## Análisis multivariante
 
-```{r, echo=FALSE, fig.align='center', out.width='50%', fig.cap= 'Gráfico de barras del sexo. Se aprecia la brecha salarial debida al género, en la que el 85\\% de los que ganan >50K son hombres, mientras que solo el 15\\% de las mujeres lo son'}
-
-ggplot(df, aes(x = fct_infreq(sex), fill = income))+
-  geom_bar(aes(y = ..count../tapply(..count.., ..fill.., sum)[..fill..]),
-           position ="dodge")+
-  geom_text(aes(y=..count../tapply(..count.., ..fill.. ,sum)[..fill..], 
-                 label=scales::percent(round(..count../tapply(..count.., ..fill.. ,sum)[..fill..], 2))),
-            stat="count", position=position_dodge(0.9), vjust=-0.4)+
-  ylab('Porcentaje')+
-  scale_fill_brewer(palette="Dark2")+
-  xlab("sex")+
-  scale_y_continuous(labels = scales::percent, limits = c(0,1))+
-  theme_minimal()+
-  theme(legend.position = "none")
-```
 
 
 
