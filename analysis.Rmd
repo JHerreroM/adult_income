@@ -211,6 +211,7 @@ Podemos realizar un breve descriptivo de los valores numéricos presentes en los
 
 summary(df[,numericas])
 ```
+
 Vemos que la edad media es `r mean(df$age)`, presentando valores que van desde `r min(df$age)` a `r max(df$age)`. Podemos apreciar en la tabla anterior otros parámetros, lo cual nos da cierta informacion a priori sobre las distribuciones de los datos. Por ejemplo vemos que el valor mínimo, la mediana y el 3er cuartil de `capital.gain` y `capital.loss` se encuentran en el 0. Esto debe de ser porque son variables muy asintóticas. Por el contrario vemos que los datos de `hours.per.week` se encuentran en torno a la cifra de 40, lo que indica que presentará una distribución muy leptocúrtica. 
 
 Podemos representar las distribuciones de los datos para ver como se distribuyen
@@ -463,8 +464,6 @@ do.call("grid.arrange", c(plist, ncol = nCol))
 ```
 
 ## Análisis multivariante
-
-
 
 
 
