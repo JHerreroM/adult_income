@@ -142,7 +142,7 @@ De cara a imputarlos o no habría que determinar cuál es el mecanismo de genera
 * Perdidos no aleatorios (MNAR por sus siglas en inglés): en este caso no sabemos el mecanismo por el que los datos se encuentran perdidos, y este no es debido al azar, por lo que no podemos de hecho deducir las categorias 
 
 Si examinamos como se comportan las variables con datos perdidos en función de la variable `income`
-<<<<<<< HEAD
+
 
 ```{r, fig.align='center', fig.cap='Datos de tipo de trabajo y salario. Se aprecia que los datos perdidos se agrupan más en la categoría de <=50k, por lo que no es totalmente aleatorio. Podríamos decir que los datos perdidos son del tipo MAR, por lo que podemos realizar la imputación de los datos. Esto ocurre también con el resto de las variables, pues es posible que exista un sesgo en el que los encuestados con menor salario tiendan a responder menos a determinados items.', out.width='75%', echo=FALSE}
 
@@ -199,6 +199,7 @@ ggplot(df_res, aes(x = variable, y = value))+
   theme_minimal()
 
 ```
+
 ## Descripción de los valores
 
 ### Valores numéricos
