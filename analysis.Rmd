@@ -207,14 +207,11 @@ ggplot(df2, aes(workclass, fill = workclass))+
 ```
 
 
-La imputación con la fórmula utilizada puede crear unas variables dummy que indican si el valor de alguna columna para esa fila es real o imputado,
-pero teniendo el dataframe original no hace falta crear más variables. Sabemos que varias de éstas tienen relación entre sí (education y
-edication.num, marital.status y relationship), por lo que vamos a eliminar una de cada pareja para reducir el número de variables.
+La imputación con la fórmula utilizada puede crear unas variables dummy que indican si el valor de alguna columna para esa fila es real o imputado, pero teniendo el dataframe original no hace falta crear más variables. Sabemos que varias de éstas tienen relación entre sí (`education` y `education.num`, `marital.status` y `relationship`), por lo que vamos a eliminar una de cada pareja para reducir el número de variables.
 
-Por otro lado, capital.gain and capital.loss hacen referencia a lo mismo, por lo que vamos a combinarlas en una sola variable.
+Por otro lado, `capital.gain` y `capital.loss` hacen referencia a lo mismo, por lo que vamos a combinarlas en una sola variable.
 
-La variable fnlwgt hace referencia al peso que tiene cada columna, es decir, un valor asignado por el censo sobre las características demográficas
-de dicha columna, por lo que no nos aporta información relevante para el estudio (no sirve para hacer una weighted.mean por ejemplo)
+La variable `fnlwgt` hace referencia al peso que tiene cada columna, es decir, un valor asignado por el censo sobre las características demográficas de dicha columna, por lo que no nos aporta información relevante para el estudio (no sirve para hacer una media ponderada or ejemplo)
 
 ```{r}
 
@@ -229,25 +226,40 @@ df2$fnlwgt<-NULL
 
 ```
 
-Ahora tenemos 11 variables en nuestro dataframe, 4 menos que al principio, pero una de ellas, native.country, tiene muchas categorías dentro, por 
-lo que vamos a reducirlas a 9 categorías más relevantes.
+Ahora tenemos 11 variables en nuestro dataframe, 4 menos que al principio, pero una de ellas, `native.country`, tiene muchas categorías dentro, por lo que vamos a reducirlas a 9 categorías más relevantes.
 
-```{r, include = FALSE}
-# Primero, obtenemos la lista de factores ordenados
-levels(df2$native.country)
-```
+
 
 ```{r}
 # Sustituimos los datos para agrupar categorías
 
-#rename every factor level
-levels(df2$native.country) <- c("Other", "Canada", "China", "South-America", "South-America", "South-America","South-America",
-"South-America", "Europe", "Europe", "Europe", "Europe", "South-America", "Other", "Europe", "South-America", "Asia", "Europe", "India", "Other",
-"Europe", "Europe", "Other", "Asia", "Other", "Mexico", "South-America", "Other", "South-America", "Asia",
-"Europe", "Europe", "South-America", "Europe", "Asia", "Asia", "Asia", "Other", "United-States", "Asia", "Other")
+Other = c("South","Outlying-US(Guam-USVI-etc)")
 
-#view levels of 'conf' variable
+North_america = c("Canada", "United-States")
+
+South_america = c("Columbia", "Cuba", "Dominican-Republic", "Ecuador", 
+                  "El-Salvador", "Guatemala", "Haiti", "Honduras", 
+                  "Jamaica", "Mexico", "Nicaragua", "Peru", "Puerto-Rico", 
+                  "Trinadad&Tobago")
+
+Europe = c("England", "France", "Germany", "Greece", "Holand-Netherlands",
+           "Hungary", "Ireland", "Italy", "Poland", "Portugal", "Scotland", 
+           "Yugoslavia")
+
+Asia = c("Hong", "India", "Iran", "Japan", "Laos", "Cambodia", "China",
+         "Philippines","Taiwan", "Thailand", "Vietnam")
+
+
+# Reclasificamos los niveles
+levels(df2$native.country) <- list(NorthAmerica = North_america, 
+                                   SouthAmerica =  South_america, 
+                                   Eur = Europe, Asian = Asia, Ot = Other)
+
+
+# Vemos los niveles de la variable
 levels(df2$native.country)
+
+table(df2$native.country)
 ```
 
 ## Detección de valores extremos (outliers)
@@ -289,6 +301,8 @@ ggplot(df_res, aes(x = variable, y = value))+
   theme_minimal()
 
 ```
+
+\newpage
 
 # Análisis de los datos
 
@@ -395,24 +409,33 @@ Podemos realizar a continuación una breve representación gráfica de los datos
 ```{r, echo=FALSE, fig.align='center', fig.width=10, fig.height=10, fig.cap= 'Gráfico de barras de las variables categóricas'}
 
 bar_plot = function (var) {
-
-    p = ggplot(df2, aes(x =fct_infreq(!!sym(var)), fill = !!sym(var)))+
+    
+    if (length(levels(df2[[var]])) >2){
+        p = ggplot(df2, aes(x =fct_infreq(!!sym(var)), fill = !!sym(var)))+
         geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), position = "dodge")+
         scale_y_continuous("Percentage", labels = scales::percent, limits = c(0,1))+
         xlab(var)+
         theme_minimal()+
         coord_flip()+
         theme(legend.position = "none")
-    
+    } else {
+      p = ggplot(df2, aes(x=factor(1), fill=!!sym(var)))+
+        geom_bar(width=1, colour="black")+
+        coord_polar(theta="y")+
+        theme_void()
+    }
+
   return(p)}
 
-plist = lapply(non_num[non_num!="native.country"], bar_plot)
+plist = lapply(non_num, bar_plot)
 
+levels(df2$sex)
 do.call("grid.arrange", c(plist, ncol = 3))
 
 ```
 
 \newpage
+
 # Pruebas estadísticas
 
 Una vez conocidas las variables y sus distribuciones, podemos ver cual es la relación de estas variables con los datos de los ingresos y ver si existe alguna variable que se relacione de forma significativa con los ingresos. Separaremos el análisis por variables cuantitativas y variables cuantitativas. 
@@ -546,7 +569,7 @@ barplot_group = function (var) {
   
 }
 
-plist = lapply(non_num[!non_num%in%c("native.country", "sex", "income")], barplot_group)
+plist = lapply(non_num[!non_num%in%c("sex", "income")], barplot_group)
 
 n <- length(plist)
 nCol <- floor(sqrt(n))
@@ -558,110 +581,71 @@ do.call("grid.arrange", c(plist, ncol = nCol))
 
 Podemos intentar ajustar un modelo de cara a predecir con las variables anteriores el sueldo. Un acercamiento simple al problema puede ser el ajuste de una regresión logística binomial para la predicción de la variable `income`.
 
-
-Se crea el modelo predictivo utilizando todas las variables del set, creando una variable binomial a partir del income y exceptuando income 
-(ya que el programa ve la relación directa que hay con esa variable) En primer lugar, se va a encontrar el valor más repetido de cada varaible
-catergórica y se seleccionará como categoría de referencia. Para ello, se va a crear una función que nos diga dicho valor
-
-```{r}
-valor_mas_frecuente<-function(x){
- uniqx<-unique(x)
- uniqx[which.max(tabulate(match(x, uniqx)))]
-}
-
-valor_mas_frecuente(df2$race)
-valor_mas_frecuente(df2$marital.status)
-valor_mas_frecuente(df2$occupation)
-valor_mas_frecuente(df2$workclass)
-valor_mas_frecuente(df2$sex)
-valor_mas_frecuente(df2$native.country)
-```
-```{r}
-df2$race <- relevel(factor(df2$race), ref = "White")
-df2$marital.status <- relevel(factor(df2$marital.status), ref =
-"Married-civ-spouse")
-df2$occupation <- relevel(factor(df2$occupation), ref = "Prof-specialty")
-df2$workclass <- relevel(factor(df2$workclass), ref = "Private")
-df2$sex <- relevel(factor(df2$sex), ref = "Male")
-df2$native.country <- relevel(factor(df2$native.country), ref = "United-States")
-```
+Se crea el modelo predictivo utilizando todas las variables del set, creando una variable binomial a partir del income y exceptuando income  (ya que el programa ve la relación directa que hay con esa variable).
 
 
 ```{r}
+
+# Reordenamos los niveles de los factores
+invers = function(y) {-length(y)}
+df2[,non_num] = lapply(non_num, function(x) reorder(df2[[x]], df2[[x]], FUN= invers))
+
+# Creamos una variable dicotómica
 df2$Less50 <- ifelse(df2$income == "<=50K", 0, 1)
+
+# Obtenemos una muestra del 80% de los datos
 sampling<-sort(sample(nrow(df2),nrow(df2)*0.8))
+
+# Seleccionamos un grupo para ajustar el modelo
 training_set<-df2[sampling,]
+
+# Seleccionamos otro grupo para validarlo
 testing_set<-df2[-sampling,]
+
+# Ajustamos una regresión logística binomial
 modeloLR<-glm(Less50~. - income, data = training_set, family = binomial)
+
+# Mostramos en pantalla el modelo 
 summary(modeloLR)
 ```
 
-En lo que respecta a las variables explicativas, las variables continuas (edad, horas a la 
-semana, capital.change y el nivel de educación) influyen significativamente en la probabilidad de 
-tener un salario. En cuanto al resto de variables, se puede apreciar la contribución del 
-género (Male), raza (White), work-class (Private), marital_status (Married) y 
-ocuppation (Exec-managerial)
+En lo que respecta a las variables explicativas, las variables continuas (`age`, `hours.per.week`, `capital.change` y el `education.level`) influyen significativamente en la probabilidad de tener un salario. En cuanto al resto de variables, se puede apreciar la contribución del `sex` (Male > Female), `race` (White> todas menos islander pacific que no es significativo), `work-class` (Private, aunque federal gov es significativamente mayor), `marital_status` (Married mayor que todas) y  `ocuppation` (Exec-managerial mayor que todas). Además se aprecia que los norteamericanos tienen sueldos superiores al resto de nacionalidades, excepto que asiaticos y europeos, donde no se aprecian diferencias significativas
 
 
-Ahora, vamos a comprobar el modelo para predecir el resultado del testing_set, es 
-decir, con datos no utilizados para entrenar el modelo. Luego, factorizamos la 
-probabilidad optenida como 1 o 0, de manera que cuadre con el formato esperado
-
+Ahora, vamos a comprobar el modelo para predecir el resultado del testing_set, es decir, con datos no utilizados para entrenar el modelo. Luego, factorizamos la  probabilidad optenida como 1 o 0, de manera que cuadre con el formato esperado
 
 
 ```{r}
+# Predecimos los datos 
 prediccion_test<-predict(modeloLR, testing_set)
+
+# Si la probabilidad es mayor o igual al 50% entonces valdrá 1 
 prediccion_test<-ifelse(prediccion_test>=0.5,1,0)
-head(prediccion_test)
 ```
 
-Una vez se tiene la predicción, se crea la matriz de confusión (se pasan tanto los datos como la referencia como factor, para evitar 
-problemas de formato)
+Una vez se tiene la predicción, se crea la matriz de confusión (se pasan tanto los datos como la referencia como factor, para evitar  problemas de formato)
 
 ```{r}
 table(as.factor(prediccion_test), as.factor(testing_set$Less50))
 ```
-Se puede observar que el modelo hace un buen trabajo a priori, siendo la mayor 0 predichos como les corresponde. Para analizar de
-manera cuantificable la predicción del modelo, se calculan la sensitividad y sensibilidad. No utilizaremos las funciones por defecto para 
-realizar estos cálculos ya que toman el 0 como positivo y el 1 como negativo.
+Se puede observar que el modelo hace un buen trabajo a priori, siendo la mayor 0 predichos como les corresponde. Para analizar de manera cuantificable la predicción del modelo, se calculan la sensitividad y sensibilidad. No utilizaremos las funciones por defecto para realizar estos cálculos ya que toman el 0 como positivo y el 1 como negativo.
 
 
-La sensibilidad es el ratio de los positivos, es decir positivos verdaderos / (positivos verdaderos + falsos negativos), es decir, cuantos 
-casos negativos se asocian erróneamente con un positivo (en este caso, solo `r (4736)/(4736+895)` de los casos asignados como negativos 
-por el modelo son en realidad positivos).
+La sensibilidad es el ratio de los positivos, es decir positivos verdaderos / (positivos verdaderos + falsos negativos), es decir, cuantos casos negativos se asocian erróneamente con un positivo (en este caso, solo `r (4736)/(4736+895)` de los casos asignados como negativos  por el modelo son en realidad positivos).
 
-La especificidad es el ratio de los negativos, es decir negativos verdaderos / (negativos verdaderos + falsos positivos), es decir, cuantos 
-casos positivos se asocian erróneamente con un negativo (en este caso, solo `r (699)/(699+183)` de los casos asignados como positivos 
-por el modelo son en realidad negativos). En este caso se comprueba que el modelo no hace tan buen trabajo, por lo que seguramente habría que
-revisar de nuevo qué datos no han sido significativos en el modelo, y realizar alguna transformación para mejorar el resultado obtenido.
+La especificidad es el ratio de los negativos, es decir negativos verdaderos / (negativos verdaderos + falsos positivos), es decir, cuantos casos positivos se asocian erróneamente con un negativo (en este caso, solo `r (699)/(699+183)` de los casos asignados como positivos por el modelo son en realidad negativos). En este caso se comprueba que el modelo no hace tan buen trabajo, por lo que seguramente habría que revisar de nuevo qué datos no han sido significativos en el modelo, y realizar alguna transformación para mejorar el resultado obtenido.
 
 
 # Conclusiones
 
-Se han sometido los datos a un preprocesamiento para manejar los casos de  elementos vacíos y valores extremos (outliers). Para el caso de 
-los primeros, tras analizar su distribución (MAR), se ha elegido la imputación de los valores basándonos en los valores similares a los perdidos
-(o más próximos), de manera que no se eliminen los registros, pero manteniendo la base de datos sin alterar por si hubiese hecho falta
-una revisión de los valores imputados. Para el caso del segundo, debido al estado de las leyes laborales de EEUU, se ha optado por incluirlos, ya
-que no tenemos la certeza de que esos extremos sean imposibles, y eliminar los valores sin un respaldo no parece la opción más correcta. 
+Se han sometido los datos a un preprocesamiento para manejar los casos de  elementos vacíos y valores extremos (outliers). Para el caso delos primeros, tras analizar su distribución (MAR), se ha elegido la imputación de los valores basándonos en los valores similares a los perdidos (o más próximos), de manera que no se eliminen los registros, pero manteniendo la base de datos sin alterar por si hubiese hecho falta
+una revisión de los valores imputados. Para el caso del segundo, debido al estado de las leyes laborales de EEUU, se ha optado por incluirlos, ya que no tenemos la certeza de que esos extremos sean imposibles, y eliminar los valores sin un respaldo no parece la opción más correcta. 
 
-Posteriormente, se ha llevado a cabo un análisis de las variables, reduciendo la dimensionalidad eliminando aquellas que eran redundantes 
-o no aportaban información relevante y agrupando las categorías de las variables no numéricas para reducirlas sin perder información relevante.
-También se han explorado las variables de valores numéricos, estudiando su normalidad y homocedasticidad, así como la distribución de las variables
-categóricas mediante gráficas.
+Posteriormente, se ha llevado a cabo un análisis de las variables, reduciendo la dimensionalidad eliminando aquellas que eran redundantes o no aportaban información relevante y agrupando las categorías de las variables no numéricas para reducirlas sin perder información relevante. También se han explorado las variables de valores numéricos, estudiando su normalidad y homocedasticidad, así como la distribución de las variables categóricas mediante gráficas.
 
-Una vez conocidas las variables y sus distribuciones, se ha procedido a estudiar la significancia de ambos tipos de variables con respecto a
-"income". Para las cuantitativas, dada la falta de normalidad y homocedasticidad, se ha utilizado el test de Wilcoxon, un test no paramétrico,
-para la comparación de dos muestras. Para las cualitativas, se ha realizado un test de χ2 (chi cuadrado), si bien si en alguna de las 
-casillas existe algún valor inferior a 5 se ha aplicado el test de fisher.
+Una vez conocidas las variables y sus distribuciones, se ha procedido a estudiar la significancia de ambos tipos de variables con respecto a `income`. Para las cuantitativas, dada la falta de normalidad y homocedasticidad, se ha utilizado el test de Wilcoxon, un test no paramétrico, para la comparación de dos muestras. Para las cualitativas, se ha realizado un test de $\chi^2$ (chi cuadrado), si bien si en alguna de las  casillas existe algún valor inferior a 5 se ha aplicado el test de fisher.
 
-Finalmente, se ha utilizado un modelo de regresión logística primero para adaptarlo al set de entrenamiento, y luego se ha comprobado su eficacia
-prediciendo los resultados esperados con los datos de test, así como se ha comprobado dichos resultados midiendo tanto su sensibilidad como
-sensitividad. En el caso de estudio, no tiene porque haber ninguna preferencia de cara a mejorar una de estas estadísticas en detrimento 
-de la otra, pero dependiendo del uso que se le vaya a dar al modelo, puede ser interesante. Por ejemplo, si se van a usar para la concesión 
-o no de créditos solamente a las pesonas con un salario anual mayor que 50k, deberíamos ponderar cuanto nos interesa la cantidad de créditos
-que otorgamos frente a otorgarlos a gente que en realidad no cumpla la condición (en otras utilidades, como en datos utilizados para 
-predecir enfermedades, las consecuencias de un falso negativo y de un falso positivo pueden tener consecuencias muy diferentes).
-
+Finalmente, se ha utilizado un modelo de regresión logística primero para adaptarlo al set de entrenamiento, y luego se ha comprobado su eficacia prediciendo los resultados esperados con los datos de test, así como se ha comprobado dichos resultados midiendo tanto su sensibilidad como sensitividad. En el caso de estudio, no tiene porque haber ninguna preferencia de cara a mejorar una de estas estadísticas en detrimento  de la otra, pero dependiendo del uso que se le vaya a dar al modelo, puede ser interesante. Por ejemplo, si se van a usar para la concesión  o no de créditos solamente a las pesonas con un salario anual mayor que 50k, deberíamos ponderar cuanto nos interesa la cantidad de créditos que otorgamos frente a otorgarlos a gente que en realidad no cumpla la condición (en otras utilidades, como en datos utilizados para  predecir enfermedades, las consecuencias de un falso negativo y de un falso positivo pueden tener consecuencias muy diferentes).
 
 
 
