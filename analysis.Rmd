@@ -19,7 +19,7 @@ header-includes:
 knitr::opts_chunk$set(echo = TRUE, fig.pos = 'H')
 
 list.of.packages <- c("ggplot2", "nortest", "forcats", "gridExtra", "kableExtra",
-                      "bestglm")
+                      "bestglm", "VIM", "corrplot")
 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -66,9 +66,6 @@ En esta práctica se desarrollan las siguientes competencias del Máster de Data
   
 * Capacidad para aplicar las técnicas específicas de tratamiento de datos (integración, transformación, limpieza y validación) para su posterior análisis.
 
-\newpage
-# Resolución 
-
 ## Descripción del Dataset
 
 Este conjunto de datos contiene información de una muestra extraída a partir de un censo estadounidense, en el que para
@@ -102,8 +99,8 @@ La importancia de este dataset podría encontrarse en el uso que pudieran hacer 
 función de saber cuánto llegarán a ganar, así como el hecho de que permite profundizar en las diferencias socieconómicas de diferentes grupos
 sociales (o al menos, en las existentes en 1996).
 
-
-## Limpieza y cargado de los datos
+\newpage
+# Limpieza de los datos 
 
 Leemos el primer lugar el archivo. Para ello tenemos que emplear la función `read.csv` contenida dentro del paquete base de R.
 
@@ -126,7 +123,7 @@ Vemos en el epígrafe anterior varias cosas. Por un lado podemos ver que los dat
 
 ```{r}
 # Sustituimos los datos
-df[df=="?"]<-NA
+df[df=="?"]<- NA
 ```
 
 También podemos ver que realmente los datos que son de tipo `chr` deberían serlo del tipo `factor`, por lo que podemos definir una función en la que si la columna es de tipo caracter la transforme en factor
@@ -139,7 +136,6 @@ df[sapply(df, is.character)] <- lapply(df[sapply(df, is.character)],
 # Comprobamos que han cambiado
 str(df)
 ```
-
 
 
 ## Examinando los datos perdidos
@@ -188,7 +184,71 @@ ggplot(df, aes(workclass, fill = workclass))+
 
 ```
 
-Para este caso concreto analizaremos los datos perdidos como una categoría más de los datos, sin llegar a eliminarla. Si en el futuro para el desarrollo de un modelo necesitamos que no existan valores perdidos lo imputaremos 
+La imputación de datos en este caso no parece estrictamente necesaria, ya que incluso sin tenerlos en cuenta queda una cantidad más que aceptable
+de datos, pero de cara a la demostración práctica para la actividad que nos ocupa, se va a llevar a cabo. Teniendo en cuenta la distribución de los
+mismos (MAR), se utilizará el método kNN (k-Nearest Neighbors) que se basa en los k datos vecinos más cercanos para asignar el valor a imputar.
+
+```{r, fig.align='center', fig.cap='Datos de tipo de trabajo y salario. Se han eliminado los valores NA, siendo sustituidos por valores cercanos a los mismos. A partir de ahora, se trabajará con este nuevo dataframe para preservar el original en caso de que tengamos dudas de si la imputación ha sido correcta', out.width='75%', echo=FALSE}
+
+# Se imputan los datos de las variables en las que hemos observado los datos perdidos
+
+df2<-kNN(df,variable = c("workclass","occupation","native.country"),k=5, imp_var = FALSE)
+
+# Verificamos la imputación representando el mismo gráfico
+
+ggplot(df2, aes(workclass, fill = workclass))+
+  geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), position = "dodge")+
+  scale_y_continuous("Percentage", labels = scales::percent)+
+  facet_grid(~income)+
+  theme_classic()+
+  theme(legend.position = "none", 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+```
+
+
+La imputación con la fórmula utilizada puede crear unas variables dummy que indican si el valor de alguna columna para esa fila es real o imputado,
+pero teniendo el dataframe original no hace falta crear más variables. Sabemos que varias de éstas tienen relación entre sí (education y
+edication.num, marital.status y relationship), por lo que vamos a eliminar una de cada pareja para reducir el número de variables.
+
+Por otro lado, capital.gain and capital.loss hacen referencia a lo mismo, por lo que vamos a combinarlas en una sola variable.
+
+La variable fnlwgt hace referencia al peso que tiene cada columna, es decir, un valor asignado por el censo sobre las características demográficas
+de dicha columna, por lo que no nos aporta información relevante para el estudio (no sirve para hacer una weighted.mean por ejemplo)
+
+```{r}
+
+# Eliminamos dos de las variables "repetidas"
+
+df2$education<-NULL
+df2$relationship<-NULL
+df2$capital.change <- df2$capital.gain-df2$capital.loss
+df2$capital.gain<-NULL
+df2$capital.loss<-NULL
+df2$fnlwgt<-NULL
+
+```
+
+Ahora tenemos 11 variables en nuestro dataframe, 4 menos que al principio, pero una de ellas, native.country, tiene muchas categorías dentro, por 
+lo que vamos a reducirlas a 9 categorías más relevantes.
+
+```{r, include = FALSE}
+# Primero, obtenemos la lista de factores ordenados
+levels(df2$native.country)
+```
+
+```{r}
+# Sustituimos los datos para agrupar categorías
+
+#rename every factor level
+levels(df2$native.country) <- c("Other", "Canada", "China", "South-America", "South-America", "South-America","South-America",
+"South-America", "Europe", "Europe", "Europe", "Europe", "South-America", "Other", "Europe", "South-America", "Asia", "Europe", "India", "Other",
+"Europe", "Europe", "Other", "Asia", "Other", "Mexico", "South-America", "Other", "South-America", "Asia",
+"Europe", "Europe", "South-America", "Europe", "Asia", "Asia", "Asia", "Other", "United-States", "Asia", "Other")
+
+#view levels of 'conf' variable
+levels(df2$native.country)
+```
 
 ## Detección de valores extremos (outliers)
 
@@ -196,10 +256,10 @@ Podemos examinar dentro de las variables cuantitativas si existen datos que podr
 
 ```{r}
 # Seleccionamos las variables numéricas
-numericas = names(df)[sapply(df, is.numeric)]
+numericas = names(df2)[sapply(df2, is.numeric)]
 
 # Escalamos los datos numéricos
-df_num = data.frame(lapply(df[,numericas], scale))
+df_num = data.frame(lapply(df2[,numericas], scale))
 
 # Transformamos el dataframe a la forma larga
 df_res = reshape(df_num, varying = list(names(df_num)), times =names(df_num),
@@ -212,15 +272,15 @@ En la figura 2 podemos ver la representación de los registros que sobrepasan la
 # Con este comando podríamos seleccionar los outliers de la edad
 # boxplot.stats(df$age)$out
 # Sin embargo son muchos registros, por lo que solo seleccionamos el máximo
-max(df$age)
+max(df2$age)
 
-max(df$hours.per.week)
+max(df2$hours.per.week)
 ```
 
-Podemos ver que la edad máxima es `r max(df$age)` que puede tener sentido si estamos hablando de una encuesta, aunque estos encuestados realmente no se encuentran en edad de trabajar. Si consideramos las horas trabajadas por semana vemos que existen algunos registros algo incongruentes pues hay individuos que refieren trabajar hasta `r max(df$hours.per.week)`, lo cual excede el máximo de horas semanales permitidas en España, y si contamos que al menos una persona debe de dormir un mínimo de 6 horas diarias, sería estar trabajando un `r round(max(df$hours.per.week)/((24-6)*7)*100, 2)`% del tiempo que una persona está despierta en una semana. Sin embargo supondremos que esto es correcto, pues contiene los datos de muchos países que puede que sean reales.
+Podemos ver que la edad máxima es `r max(df2$age)` que puede tener sentido si estamos hablando de una encuesta, aunque estos encuestados realmente no se encuentran en edad de trabajar. Si consideramos las horas trabajadas por semana vemos que existen algunos registros algo incongruentes pues hay individuos que refieren trabajar hasta `r max(df2$hours.per.week)`, lo cual excede el máximo de horas semanales permitidas en España, y si contamos que al menos una persona debe de dormir un mínimo de 6 horas diarias, sería estar trabajando un `r round(max(df2$hours.per.week)/((24-6)*7)*100, 2)`% del tiempo que una persona está despierta en una semana. Sin embargo supondremos que esto es correcto, dado que con las leyes laborales de EEUU puede que sean reales.
 
 
-```{r, fig.align='center', fig.cap='Outliers. Se aprecian los datos escalados para las variables cuantitativas. Las líneas rojas discontinuas representan 2 veces la desviación estandar de la media. Se aprecia que existen muchos registros que podrían ser considerados outliers, especialmente dentro de la variable `fnlwgt`.', out.width='75%', echo=FALSE}
+```{r, fig.align='center', fig.cap='Outliers. Se aprecian los datos escalados para las variables cuantitativas. Las líneas rojas discontinuas representan 2 veces la desviación estandar de la media. Se aprecia que existen muchos registros que podrían ser considerados outliers.', out.width='75%', echo=FALSE}
 # Representamos los datos
 ggplot(df_res, aes(x = variable, y = value))+
   geom_hline(yintercept = c(-2,2), color="Red", linetype = 2)+
@@ -230,19 +290,19 @@ ggplot(df_res, aes(x = variable, y = value))+
 
 ```
 
-## Descripción de los valores
+# Análisis de los datos
 
-### Valores numéricos
+## Valores numéricos
 
 Podemos realizar un breve descriptivo de los valores numéricos presentes en los datos con el comando summary
 
 ```{r}
 # Llamamos a la función summary
 
-summary(df[,numericas])
+summary(df2[,numericas])
 ```
 
-Vemos que la edad media es `r mean(df$age)`, presentando valores que van desde `r min(df$age)` a `r max(df$age)`. Podemos apreciar en la tabla anterior otros parámetros, lo cual nos da cierta informacion a priori sobre las distribuciones de los datos. Por ejemplo vemos que el valor mínimo, la mediana y el 3er cuartil de `capital.gain` y `capital.loss` se encuentran en el 0. Esto debe de ser porque son variables muy asintóticas. Por el contrario vemos que los datos de `hours.per.week` se encuentran en torno a la cifra de 40, lo que indica que presentará una distribución muy leptocúrtica. 
+Vemos que la edad media es `r mean(df$age)`, presentando valores que van desde `r min(df$age)` a `r max(df$age)`. Podemos apreciar en la tabla anterior otros parámetros, lo cual nos da cierta informacion a priori sobre las distribuciones de los datos. Por ejemplo vemos que el valor mínimo, la mediana y el 3er cuartil de `capital.change` se encuentran en el 0. Esto debe de ser porque es una variable muy asintótica. Por el contrario vemos que los datos de `hours.per.week` se encuentran en torno a la cifra de 40, lo que indica que presentará una distribución muy leptocúrtica. 
 
 Podemos representar las distribuciones de los datos para ver como se distribuyen
 
@@ -250,7 +310,7 @@ Podemos representar las distribuciones de los datos para ver como se distribuyen
 
 # Creamos una función para representar los datos
 plot_hist<-function(x) {
-  hist(df[,x], main = x, xlab = x)
+  hist(df2[,x], main = x, xlab = x)
 }
 
 # Generamos una matriz para la representación 
@@ -281,11 +341,11 @@ testear = function (test, pos){
     # de normalidad de Anderson Darling
     if (test == "normal") {
       texto = "normales"
-      p_val = ad.test(df[,vari])$p.value 
+      p_val = ad.test(df2[,vari])$p.value 
     }
     if (test == "homocedasticidad"){
       texto = "homocedásticas"
-      p_val = fligner.test(df[,vari], df[["income"]])$p.value
+      p_val = fligner.test(df2[,vari], df2[["income"]])$p.value
     }
     if (i == 1) cat(paste0("Variables que ", text2," son ", texto, ":\n"), 
                   "------------------------------------------------\n") 
@@ -314,17 +374,17 @@ testear("homocedasticidad",">")
 ```
 Podemos ver por lo tanto que todos las variables numéricas no son normales y no son homocedásticas, por lo que tendremos que usar test no paramétricos para el estudio de las variables
 
-### Valores categóricos
+## Valores categóricos
 
 Podemos realizar un breve descriptivo de los valores categóricos presentes en los datos con el comando summary
 
 ```{r}
 
 # Seleccionamos las variables no numericas
-non_num = names(df)[!names(df)%in%numericas]
+non_num = names(df2)[!names(df2)%in%numericas]
 
 # Llamamos a la función summary de estas variables
-summary(df[,non_num])
+summary(df2[,non_num])
 ```
 
 En este caso solo podemos ver las frecuencias de los datos, aunque vemos que los datos se encuentran muy disbalanceados. Por eemplo vemos que la mayoría de los casos `workclass` es `Private`, que está centrado en EEUU, hombres y con un `income` inferior a 50K. Respecto a su estado marital vemos que tenemos muchos que nunca se han casado 
@@ -336,7 +396,7 @@ Podemos realizar a continuación una breve representación gráfica de los datos
 
 bar_plot = function (var) {
 
-    p = ggplot(df, aes(x =fct_infreq(!!sym(var)), fill = !!sym(var)))+
+    p = ggplot(df2, aes(x =fct_infreq(!!sym(var)), fill = !!sym(var)))+
         geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), position = "dodge")+
         scale_y_continuous("Percentage", labels = scales::percent, limits = c(0,1))+
         xlab(var)+
@@ -352,17 +412,18 @@ do.call("grid.arrange", c(plist, ncol = 3))
 
 ```
 
-## Análisis univariante
+\newpage
+# Pruebas estadísticas
 
 Una vez conocidas las variables y sus distribuciones, podemos ver cual es la relación de estas variables con los datos de los ingresos y ver si existe alguna variable que se relacione de forma significativa con los ingresos. Separaremos el análisis por variables cuantitativas y variables cuantitativas. 
 
-### Variables cuantitativas
+## Variables cuantitativas
 
 Podemos hacer un análisis gráfico para ver si existen diferencias en alguna variable, realizando este análisis gráfico mediante boxplots, tal como se ve en la figura 5.
 
 ```{r,  fig.align='center', fig.cap='Boxplot de las variables cuantitativas respecto a income. Visualmente parece que la gente más mayor es la que tiene salarios más altos, también los que han estudiado más años y los que trabajan más horas por semana', out.width='75%', echo=FALSE}
 boxplot_cust = function (var) {
-  ggplot(df, aes(x = income, y = !!sym(var), fill = income))+
+  ggplot(df2, aes(x = income, y = !!sym(var), fill = income))+
   geom_boxplot()+
   scale_fill_brewer(palette="Dark2")+
   theme_minimal()+
@@ -385,17 +446,17 @@ valor = function (x){
 
 # Generamos una tabla con el rango y la mediana
 tabla = data.frame(t(do.call(cbind, lapply(numericas, 
-                        function (x) tapply(df[[x]], df[["income"]], valor)))))
+                        function (x) tapply(df2[[x]], df2[["income"]], valor)))))
 
 # Calculamos los valores de p del test de wilcoxon
 p = do.call(rbind, lapply(numericas, 
-       function (x) as.vector(pairwise.wilcox.test(df[[x]], df$income)$p.value)))
+       function (x) as.vector(pairwise.wilcox.test(df2[[x]], df2$income)$p.value)))
 
 # Unimos las dos tablas
 tabla = cbind(tabla, round(p, 3))
 tabla[,3]<-ifelse(tabla[,3]==0, "<0.01", tabla[,3])
 rownames(tabla)<-numericas
-colnames(tabla)<-c(levels(df$income), "p valor")
+colnames(tabla)<-c(levels(df2$income), "p valor")
 ```
 
 Podemos ver que todas las variables estudiadas en este caso muestran diferencias estadísticamente significativas (tabla 1), si bien llama la atención que existan diferencias en variables como `capital.gain` y `capital.loss` en las que presentan una distribución en torno al 0. Probablemente las diferencias en estos grupos se justifiquen por los outliers, tal como se puede apreciar en los boxplots realizados con anterioridad
@@ -406,7 +467,7 @@ kable(tabla, booktabs = T, align = "c",
   kable_styling(latex_options = 'HOLD_position')
 ```
 
-### Variables cualitativas
+## Variables cualitativas
 
 Para el estudio de las variables cualitativas podemos realizar de nuevo una representación gráfica, para ver si existen diferencias entre los grupos, para posteriormente realizar los contrastes correspondientes. No mostraremos los porcentajes por cada una de las categorías ya que hay en muchos casos en los que existen variables con muchos grupos. 
 
@@ -420,7 +481,7 @@ De cara a la realización del análisis estadístico es necesario realizar un te
 # Creamos una función que realice el contraste de hipótesis
 test_hipo = function (var){
   # Creamos en primer lugar una tabla
-  tab = table(df[[var]], df[["income"]])
+  tab = table(df[[var]], df2[["income"]])
   
   # Si algún valor vale menos de 5 entonces aplicaremos el test de Fisher
   if (any(tab<5)){
@@ -469,7 +530,7 @@ ggplot(df, aes(x = fct_infreq(sex), fill = income))+
 ```{r, echo=FALSE, fig.align='center', fig.width=10, fig.height=12, fig.cap= 'Gráfico de barras de las variables categóricas. En verde se muestran los encuestados que ganan <=50K y en marrón los que ganan más de 50K', warning=FALSE}
 
 barplot_group = function (var) {
-  ggplot(df, aes(x = fct_infreq(!!sym(var)), fill = income))+
+  ggplot(df2, aes(x = fct_infreq(!!sym(var)), fill = income))+
   geom_bar(aes(y = ..count../tapply(..count.., ..fill.., sum)[..fill..]),
            position ="dodge")+
   geom_text(aes(y=..count../tapply(..count.., ..fill.. ,sum)[..fill..], 
@@ -493,19 +554,114 @@ nCol <- floor(sqrt(n))
 do.call("grid.arrange", c(plist, ncol = nCol))
 ```
 
-## Análisis multivariante
+## Modelo de regresión logística
 
 Podemos intentar ajustar un modelo de cara a predecir con las variables anteriores el sueldo. Un acercamiento simple al problema puede ser el ajuste de una regresión logística binomial para la predicción de la variable `income`.
 
 
+Se crea el modelo predictivo utilizando todas las variables del set, creando una variable binomial a partir del income y exceptuando income 
+(ya que el programa ve la relación directa que hay con esa variable) En primer lugar, se va a encontrar el valor más repetido de cada varaible
+catergórica y se seleccionará como categoría de referencia. Para ello, se va a crear una función que nos diga dicho valor
+
 ```{r}
-r2 = function(mod) {
-  with(summary(mod), 1 - (deviance/null.deviance))}
+valor_mas_frecuente<-function(x){
+ uniqx<-unique(x)
+ uniqx[which.max(tabulate(match(x, uniqx)))]
+}
 
-# Ajustamos el modelo
-mod.full = glm(income~.-fnlwgt, df, family="binomial")
-
+valor_mas_frecuente(df2$race)
+valor_mas_frecuente(df2$marital.status)
+valor_mas_frecuente(df2$occupation)
+valor_mas_frecuente(df2$workclass)
+valor_mas_frecuente(df2$sex)
+valor_mas_frecuente(df2$native.country)
 ```
+```{r}
+df2$race <- relevel(factor(df2$race), ref = "White")
+df2$marital.status <- relevel(factor(df2$marital.status), ref =
+"Married-civ-spouse")
+df2$occupation <- relevel(factor(df2$occupation), ref = "Prof-specialty")
+df2$workclass <- relevel(factor(df2$workclass), ref = "Private")
+df2$sex <- relevel(factor(df2$sex), ref = "Male")
+df2$native.country <- relevel(factor(df2$native.country), ref = "United-States")
+```
+
+
+```{r}
+df2$Less50 <- ifelse(df2$income == "<=50K", 0, 1)
+sampling<-sort(sample(nrow(df2),nrow(df2)*0.8))
+training_set<-df2[sampling,]
+testing_set<-df2[-sampling,]
+modeloLR<-glm(Less50~. - income, data = training_set, family = binomial)
+summary(modeloLR)
+```
+
+En lo que respecta a las variables explicativas, las variables continuas (edad, horas a la 
+semana, capital.change y el nivel de educación) influyen significativamente en la probabilidad de 
+tener un salario. En cuanto al resto de variables, se puede apreciar la contribución del 
+género (Male), raza (White), work-class (Private), marital_status (Married) y 
+ocuppation (Exec-managerial)
+
+
+Ahora, vamos a comprobar el modelo para predecir el resultado del testing_set, es 
+decir, con datos no utilizados para entrenar el modelo. Luego, factorizamos la 
+probabilidad optenida como 1 o 0, de manera que cuadre con el formato esperado
+
+
+
+```{r}
+prediccion_test<-predict(modeloLR, testing_set)
+prediccion_test<-ifelse(prediccion_test>=0.5,1,0)
+head(prediccion_test)
+```
+
+Una vez se tiene la predicción, se crea la matriz de confusión (se pasan tanto los datos como la referencia como factor, para evitar 
+problemas de formato)
+
+```{r}
+table(as.factor(prediccion_test), as.factor(testing_set$Less50))
+```
+Se puede observar que el modelo hace un buen trabajo a priori, siendo la mayor 0 predichos como les corresponde. Para analizar de
+manera cuantificable la predicción del modelo, se calculan la sensitividad y sensibilidad. No utilizaremos las funciones por defecto para 
+realizar estos cálculos ya que toman el 0 como positivo y el 1 como negativo.
+
+
+La sensibilidad es el ratio de los positivos, es decir positivos verdaderos / (positivos verdaderos + falsos negativos), es decir, cuantos 
+casos negativos se asocian erróneamente con un positivo (en este caso, solo `r (4736)/(4736+895)` de los casos asignados como negativos 
+por el modelo son en realidad positivos).
+
+La especificidad es el ratio de los negativos, es decir negativos verdaderos / (negativos verdaderos + falsos positivos), es decir, cuantos 
+casos positivos se asocian erróneamente con un negativo (en este caso, solo `r (699)/(699+183)` de los casos asignados como positivos 
+por el modelo son en realidad negativos). En este caso se comprueba que el modelo no hace tan buen trabajo, por lo que seguramente habría que
+revisar de nuevo qué datos no han sido significativos en el modelo, y realizar alguna transformación para mejorar el resultado obtenido.
+
+
+# Conclusiones
+
+Se han sometido los datos a un preprocesamiento para manejar los casos de  elementos vacíos y valores extremos (outliers). Para el caso de 
+los primeros, tras analizar su distribución (MAR), se ha elegido la imputación de los valores basándonos en los valores similares a los perdidos
+(o más próximos), de manera que no se eliminen los registros, pero manteniendo la base de datos sin alterar por si hubiese hecho falta
+una revisión de los valores imputados. Para el caso del segundo, debido al estado de las leyes laborales de EEUU, se ha optado por incluirlos, ya
+que no tenemos la certeza de que esos extremos sean imposibles, y eliminar los valores sin un respaldo no parece la opción más correcta. 
+
+Posteriormente, se ha llevado a cabo un análisis de las variables, reduciendo la dimensionalidad eliminando aquellas que eran redundantes 
+o no aportaban información relevante y agrupando las categorías de las variables no numéricas para reducirlas sin perder información relevante.
+También se han explorado las variables de valores numéricos, estudiando su normalidad y homocedasticidad, así como la distribución de las variables
+categóricas mediante gráficas.
+
+Una vez conocidas las variables y sus distribuciones, se ha procedido a estudiar la significancia de ambos tipos de variables con respecto a
+"income". Para las cuantitativas, dada la falta de normalidad y homocedasticidad, se ha utilizado el test de Wilcoxon, un test no paramétrico,
+para la comparación de dos muestras. Para las cualitativas, se ha realizado un test de χ2 (chi cuadrado), si bien si en alguna de las 
+casillas existe algún valor inferior a 5 se ha aplicado el test de fisher.
+
+Finalmente, se ha utilizado un modelo de regresión logística primero para adaptarlo al set de entrenamiento, y luego se ha comprobado su eficacia
+prediciendo los resultados esperados con los datos de test, así como se ha comprobado dichos resultados midiendo tanto su sensibilidad como
+sensitividad. En el caso de estudio, no tiene porque haber ninguna preferencia de cara a mejorar una de estas estadísticas en detrimento 
+de la otra, pero dependiendo del uso que se le vaya a dar al modelo, puede ser interesante. Por ejemplo, si se van a usar para la concesión 
+o no de créditos solamente a las pesonas con un salario anual mayor que 50k, deberíamos ponderar cuanto nos interesa la cantidad de créditos
+que otorgamos frente a otorgarlos a gente que en realidad no cumpla la condición (en otras utilidades, como en datos utilizados para 
+predecir enfermedades, las consecuencias de un falso negativo y de un falso positivo pueden tener consecuencias muy diferentes).
+
 
 
 
