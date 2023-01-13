@@ -29,7 +29,7 @@ This program requires the installation of RStudio prior running it: https://posi
 ## How to use it
 
 1. Open a terminal and navigate to the folder where you will store your package
-2. Download the package with the command `git clone https://github.com/adrianvallsc/webscraping_housing`
+2. Download the package with the command `git clone https://github.com/JHerreroM/adult_income
 3. Open the folder in the terminal
 4. Open Rstudio and create a new project, using for it the folder with the downloaded
 5. Open the .rmd file and execute the "run all" process
