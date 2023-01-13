@@ -1,5 +1,7 @@
 # adult_income
 
+Adrián Valls and Javier Herrero
+
 This package displays the exploration, cleaning validation and analysis of the adult.csv dataset, obtained from https://www.kaggle.com/datasets/wenruliu/adult-income-dataset 
 
 Shield: [![CC BY-SA 4.0][cc-by-sa-shield]][cc-by-sa]
