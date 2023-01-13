@@ -1,5 +1,6 @@
 ---
-title: "PEC 4"
+title: "Práctica 2"
+subtitle: "Tipología y ciclo de vida de los datos. Aula 2 "
 author: "Adrián Valls Carbó y Javier Herrero Martín"
 date: "`r Sys.Date()`"
 output: 
@@ -12,7 +13,9 @@ header-includes:
    - \usepackage{lscape}
    - \newcommand{\blandscape}{\begin{landscape}}
    - \newcommand{\elandscape}{\end{landscape}}
-
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r setup, include=FALSE}
@@ -29,80 +32,138 @@ lapply(list.of.packages, require, character.only = TRUE)
 
 ```
 
-\newpage
+
 
 # Detalles de la actividad
 
-## Descripción 
-En esta actividad se elabora un caso práctico, consistente en el tratamiento de un conjunto de datos (en inglés, dataset), orientado a aprender a identificar los datos relevantes para un proyecto analítico y usar las herramientas de integración, limpieza, validación y análisis de las mismas. 
+## Descripción
 
+En esta actividad se elabora un caso práctico, consistente en el
+tratamiento de un conjunto de datos (en inglés, dataset), orientado a
+aprender a identificar los datos relevantes para un proyecto analítico y
+usar las herramientas de integración, limpieza, validación y análisis de
+las mismas.
 
 ## Objetivos
 
 Los objetivos concretos de esta práctica son:
 
-* Aprender a aplicar los conocimientos adquiridos y su capacidad de resoluciónde problemas en entornos nuevos o poco conocidos 
-dentro de contextos más amplios o multidisciplinares
+-   Aprender a aplicar los conocimientos adquiridos y su capacidad de
+    resoluciónde problemas en entornos nuevos o poco conocidos dentro de
+    contextos más amplios o multidisciplinares
 
-* Saber identificar los datos relevantes y los tratamientos necesarios (integración,limpieza y validación) para llevar a cabo un proyecto
-analítico.
+-   Saber identificar los datos relevantes y los tratamientos necesarios
+    (integración,limpieza y validación) para llevar a cabo un proyecto
+    analítico.
 
-* Aprender a analizar los datos adecuadamente para abordar la información contenida en los datos.
+-   Aprender a analizar los datos adecuadamente para abordar la
+    información contenida en los datos.
 
-* Identificar la mejor representación de los resultados para aportar conclusiones sobre el problema planteado en el proceso analítico.
+-   Identificar la mejor representación de los resultados para aportar
+    conclusiones sobre el problema planteado en el proceso analítico.
 
-* Actuar con los principios éticos y legales relacionados con la manipulación de datos en función del ámbito de aplicación.
+-   Actuar con los principios éticos y legales relacionados con la
+    manipulación de datos en función del ámbito de aplicación.
 
-* Desarrollar las habilidades de aprendizaje que les permitan continuar estudiando de un modo que tendrá que ser en gran medida
-autodirigido o autónomo.
+-   Desarrollar las habilidades de aprendizaje que les permitan
+    continuar estudiando de un modo que tendrá que ser en gran medida
+    autodirigido o autónomo.
 
-* Desarrollar la capacidad de búsqueda, gestión y uso de información y recursos en el ámbito de la ciencia de datos.
+-   Desarrollar la capacidad de búsqueda, gestión y uso de información y
+    recursos en el ámbito de la ciencia de datos.
 
 ## Competencias
 
-En esta práctica se desarrollan las siguientes competencias del Máster de Data Science:
+En esta práctica se desarrollan las siguientes competencias del Máster
+de Data Science:
 
-* Capacidad de analizar un problema en el nivel de abstracción adecuado a cada situación y aplicar las habilidades y conocimientos adquiridos para abordarlo y resolverlo.
-  
-* Capacidad para aplicar las técnicas específicas de tratamiento de datos (integración, transformación, limpieza y validación) para su posterior análisis.
+-   Capacidad de analizar un problema en el nivel de abstracción
+    adecuado a cada situación y aplicar las habilidades y conocimientos
+    adquiridos para abordarlo y resolverlo.
+
+-   Capacidad para aplicar las técnicas específicas de tratamiento de
+    datos (integración, transformación, limpieza y validación) para su
+    posterior análisis.
 
 ## Descripción del Dataset
 
-Este conjunto de datos contiene información de una muestra extraída a partir de un censo estadounidense, en el que para
-cada persona (sin datos personales), se registran los salarios aparte de información personal adicional. Los datos han sido obtenidos en el sitio web de [Kaggle](https://www.kaggle.com/datasets/wenruliu/adult-income-dataset). Los datos proceden de la publicación de @kohavi-nbtree, que fueron obtenidas desde la oficina del censo de EEUU (US Census Bureau) en el año 1996.  El conjunto de datos contiene 32.560 registros y 15 variables y se encuentra en formato `.csv`, bajo el nombre `adult.csv`
+Este conjunto de datos contiene información de una muestra extraída a
+partir de un censo estadounidense, en el que para cada persona (sin
+datos personales), se registran los salarios aparte de información
+personal adicional. Los datos han sido obtenidos en el sitio web de
+[Kaggle](https://www.kaggle.com/datasets/wenruliu/adult-income-dataset).
+Los datos proceden de la publicación de @kohavi-nbtree, que fueron
+obtenidas desde la oficina del censo de EEUU (US Census Bureau) en el
+año 1996. El conjunto de datos contiene 32.560 registros y 15 variables
+y se encuentra en formato `.csv`, bajo el nombre `adult.csv`
 
 Las variables de esta muestra son:
 
-* `age`: Edad del individuo. Variable continua expresada en años
-* `workclass`: Categorización del individuo en base al perfil laboral. Presenta las categorías: *private,  Self-emp-not-inc, Self-emp-inc, Federal-gov, Local-gov, State-gov, Without-pay, Never-worked*
-* `fnlwgt`: Peso asignado a cada fila, refleja la proporción de datos que se asimilan dentro de la misma línea (misma información)
-* `education`: Nivel de formación educativa del individuo. Contiene las categorías: *Bachelors, Some-college, 11th, HS-grad, Prof-school, Assoc-acdm, Assoc-voc, 9th, 7th-8th, 12th, Masters, 1st-4th, 10th, Doctorate, 5th-6th, Preschool.*
-* `education.num`: Número de años de formación educativa del individuo.
-* `marital.status`: Estado civil del individuo. Categorizada en: *Married-civ-spouse, Divorced, Never-married, Separated, Widowed, Married-spouse-absent, Married-AF-spouse*
-* `occupation`: Categorización del individuo en base a la tipología de trabajo. Contiene las categorías: *Tech-support, Craft-repair, Other-service, Sales, Exec-managerial, Prof-specialty, Handlers-cleaners, Machine-op-inspct, Adm-clerical, Farming-fishing, Transport-moving, Priv-house-serv, Protective-serv, Armed-Forces*
-* `relationship`: Estado civil del individuo (a diferencia de marital_status, también hace referencia a hijos). Las categorías descritas sonç. *Wife, Own-child, Husband, Not-in-family, Other-relative, Unmarried*
-* `race`: Grupo racial al que pertenece el individuo. Dentro de ellas se encuentran: *White, Asian-Pac-Islander, Amer-Indian-Eskimo, Other, Black*
-* `sex`: Género del individuo: *Female, Male*
-* `capital.gain`: Ganancias capitales del individuo €.
-* `capital.loss`: Pérdidas capitales del individuo €.
-* `native.country`: País de procedencia del individuo, dentro de los que se encuentran los siguientes: *United-States, Cambodia, England, Puerto-Rico, Canada, Germany, Outlying-US(Guam-USVI-etc), India, Japan, Greece, South, China, Cuba, Iran, Honduras, Philippines, Italy, Poland, Jamaica, Vietnam, Mexico, Portugal, Ireland, France, Dominican-Republic, Laos, Ecuador, Taiwan, Haiti, Columbia, Hungary, Guatemala, Nicaragua, Scotland, Thailand, Yugoslavia, El-Salvador, Trinadad&Tobago, Peru, Hong, Holand-Netherlands*
-* `hours.per.week`: Horas por semana trabajadas por el individuo.
-* `income`: Salario (anual) del individuo, en k€, hace referencia a un umbral de salario. Presenta las categorías *>50K, <=50K*
-
+-   `age`: Edad del individuo. Variable continua expresada en años
+-   `workclass`: Categorización del individuo en base al perfil laboral.
+    Presenta las categorías: *private, Self-emp-not-inc, Self-emp-inc,
+    Federal-gov, Local-gov, State-gov, Without-pay, Never-worked*
+-   `fnlwgt`: Peso asignado a cada fila, refleja la proporción de datos
+    que se asimilan dentro de la misma línea (misma información)
+-   `education`: Nivel de formación educativa del individuo. Contiene
+    las categorías: *Bachelors, Some-college, 11th, HS-grad,
+    Prof-school, Assoc-acdm, Assoc-voc, 9th, 7th-8th, 12th, Masters,
+    1st-4th, 10th, Doctorate, 5th-6th, Preschool.*
+-   `education.num`: Número de años de formación educativa del
+    individuo.
+-   `marital.status`: Estado civil del individuo. Categorizada en:
+    *Married-civ-spouse, Divorced, Never-married, Separated, Widowed,
+    Married-spouse-absent, Married-AF-spouse*
+-   `occupation`: Categorización del individuo en base a la tipología de
+    trabajo. Contiene las categorías: *Tech-support, Craft-repair,
+    Other-service, Sales, Exec-managerial, Prof-specialty,
+    Handlers-cleaners, Machine-op-inspct, Adm-clerical, Farming-fishing,
+    Transport-moving, Priv-house-serv, Protective-serv, Armed-Forces*
+-   `relationship`: Estado civil del individuo (a diferencia de
+    marital_status, también hace referencia a hijos). Las categorías
+    descritas sonç. *Wife, Own-child, Husband, Not-in-family,
+    Other-relative, Unmarried*
+-   `race`: Grupo racial al que pertenece el individuo. Dentro de ellas
+    se encuentran: *White, Asian-Pac-Islander, Amer-Indian-Eskimo,
+    Other, Black*
+-   `sex`: Género del individuo: *Female, Male*
+-   `capital.gain`: Ganancias capitales del individuo €.
+-   `capital.loss`: Pérdidas capitales del individuo €.
+-   `native.country`: País de procedencia del individuo, dentro de los
+    que se encuentran los siguientes: *United-States, Cambodia, England,
+    Puerto-Rico, Canada, Germany, Outlying-US(Guam-USVI-etc), India,
+    Japan, Greece, South, China, Cuba, Iran, Honduras, Philippines,
+    Italy, Poland, Jamaica, Vietnam, Mexico, Portugal, Ireland, France,
+    Dominican-Republic, Laos, Ecuador, Taiwan, Haiti, Columbia, Hungary,
+    Guatemala, Nicaragua, Scotland, Thailand, Yugoslavia, El-Salvador,
+    Trinadad&Tobago, Peru, Hong, Holand-Netherlands*
+-   `hours.per.week`: Horas por semana trabajadas por el individuo.
+-   `income`: Salario (anual) del individuo, en k€, hace referencia a un
+    umbral de salario. Presenta las categorías *\>50K, \<=50K*
 
 ## Importancia y objetivos del análisis
 
-La idea original del dataset es analizar y predecir cuáles de dichas variables del censo tienen impacto en la probabilidad de que el individuo gane o no más de 50K de salario anual.
-Si bien el objetivo de la práctica no es específicamente la predicción de probabilidades, la cantidad de variables nos va a permitir realizar el  preprocesado de los datos (tanto dentro de las propias variables como eligiendo qué variables son necesarias para el estudio), así como un  análisis de la relevancia de dichas variables.  
+La idea original del dataset es analizar y predecir cuáles de dichas
+variables del censo tienen impacto en la probabilidad de que el
+individuo gane o no más de 50K de salario anual. Si bien el objetivo de
+la práctica no es específicamente la predicción de probabilidades, la
+cantidad de variables nos va a permitir realizar el preprocesado de los
+datos (tanto dentro de las propias variables como eligiendo qué
+variables son necesarias para el estudio), así como un análisis de la
+relevancia de dichas variables.
 
-La importancia de este dataset podría encontrarse en el uso que pudieran hacer desde empresas financieras para conceder créditos a sus clientes en
-función de saber cuánto llegarán a ganar, así como el hecho de que permite profundizar en las diferencias socieconómicas de diferentes grupos
-sociales (o al menos, en las existentes en 1996).
+La importancia de este dataset podría encontrarse en el uso que pudieran
+hacer desde empresas financieras para conceder créditos a sus clientes
+en función de saber cuánto llegarán a ganar, así como el hecho de que
+permite profundizar en las diferencias socieconómicas de diferentes
+grupos sociales (o al menos, en las existentes en 1996).
 
-\newpage
-# Limpieza de los datos 
 
-Leemos el primer lugar el archivo. Para ello tenemos que emplear la función `read.csv` contenida dentro del paquete base de R.
+
+# Limpieza de los datos
+
+Leemos el primer lugar el archivo. Para ello tenemos que emplear la
+función `read.csv` contenida dentro del paquete base de R.
 
 ```{r}
 # Leemos el archivo
@@ -112,21 +173,27 @@ df = read.csv("adult.csv")
 head(df[,1:5])
 ```
 
-Podemos, una vez cargados los datos, examinar cómo R ha leido cada variable y si de forma correcta las ha interpretado.
+Podemos, una vez cargados los datos, examinar cómo R ha leido cada
+variable y si de forma correcta las ha interpretado.
 
 ```{r}
 ## Llamamos a la funcion str
 str(df)
 ```
 
-Vemos en el epígrafe anterior varias cosas. Por un lado podemos ver que los datos perdidos son codificados como '?'. Esto nos conllevará problemas más adelante a la hora de analizar los datos, así que vamos a sustituirlo. En este caso podemos usar R base
+Vemos en el epígrafe anterior varias cosas. Por un lado podemos ver que
+los datos perdidos son codificados como '?'. Esto nos conllevará
+problemas más adelante a la hora de analizar los datos, así que vamos a
+sustituirlo. En este caso podemos usar R base
 
 ```{r}
 # Sustituimos los datos
 df[df=="?"]<- NA
 ```
 
-También podemos ver que realmente los datos que son de tipo `chr` deberían serlo del tipo `factor`, por lo que podemos definir una función en la que si la columna es de tipo caracter la transforme en factor
+También podemos ver que realmente los datos que son de tipo `chr`
+deberían serlo del tipo `factor`, por lo que podemos definir una función
+en la que si la columna es de tipo caracter la transforme en factor
 
 ```{r}
 # Transformamos todas las columnas que sean caracteres en factor
@@ -137,10 +204,10 @@ df[sapply(df, is.character)] <- lapply(df[sapply(df, is.character)],
 str(df)
 ```
 
-
 ## Examinando los datos perdidos
 
-Tenemos que examinar en nuestro conjunto de datos si disponemos de datos que no estén disponibles (NA o *Not Available*).
+Tenemos que examinar en nuestro conjunto de datos si disponemos de datos
+que no estén disponibles (NA o *Not Available*).
 
 ```{r}
 # Buscamos los datos perdidos
@@ -149,26 +216,47 @@ sapply(df, function (x) paste0(sum(is.na(x)),
 
 ```
 
-Vemos que tanto `workclass` como `occupation` tienen `r sum(is.na(df$workclass))` registros perdidos. En el caso de occupation vemos que tiene unos 7 registros perdidos más. Esto supone alrededor de un 6% de los datos. Por otro lado en `native.country` hay 583 registros perdidos, lo que supone un 1.79% de los datos perdidos.
-
+Vemos que tanto `workclass` como `occupation` tienen
+`r sum(is.na(df$workclass))` registros perdidos. En el caso de
+occupation vemos que tiene unos 7 registros perdidos más. Esto supone
+alrededor de un 6% de los datos. Por otro lado en `native.country` hay
+583 registros perdidos, lo que supone un 1.79% de los datos perdidos.
 
 Con los datos perdidos podemos realizar varias acciones:
 
-* Etiquetado: Simplemente podríamos asignarles una etiqueta y analizarlos como una categoría más 
-* Reemplazarlos por una medida de distribución central: podríamos reemplazarlos por la mediana. El problema es que los datos perdidos se agrupan en nuestro caso dentro de variables categóricas, por lo que podríamos sustituirlo en este caso por la moda. 
-* Imputarlos: es decir, estimar la probabilidad en función a las otras variables de a qué categoría pertence el dato en concreto. 
-* Omitirlos: es decir, eliminar aquellos registros que contengan datos perdidos o eliminar las columnas que contengan dichos registros. 
+-   Etiquetado: Simplemente podríamos asignarles una etiqueta y
+    analizarlos como una categoría más
+-   Reemplazarlos por una medida de distribución central: podríamos
+    reemplazarlos por la mediana. El problema es que los datos perdidos
+    se agrupan en nuestro caso dentro de variables categóricas, por lo
+    que podríamos sustituirlo en este caso por la moda.
+-   Imputarlos: es decir, estimar la probabilidad en función a las otras
+    variables de a qué categoría pertence el dato en concreto.
+-   Omitirlos: es decir, eliminar aquellos registros que contengan datos
+    perdidos o eliminar las columnas que contengan dichos registros.
 
-De cara a imputarlos o no habría que determinar cuál es el mecanismo de generación de los datos perdidos:
+De cara a imputarlos o no habría que determinar cuál es el mecanismo de
+generación de los datos perdidos:
 
-* Perdidos completamente aleatorios (MCAR por sus siglas en inglés): esto es que la probabilidad de que los datos estén perdidos es igual para todos los casos. Esto sería que entre todas las categorías la probabilidad de encontrar un dato perdido es constante
+-   Perdidos completamente aleatorios (MCAR por sus siglas en inglés):
+    esto es que la probabilidad de que los datos estén perdidos es igual
+    para todos los casos. Esto sería que entre todas las categorías la
+    probabilidad de encontrar un dato perdido es constante
 
-* Perdidos aleatorios (MAR por sus siglas en inglés): esto es que la probabilidad de encontrarse perdidos es constante según una categoría observada en los datos. Por ejemplo podría ser que dentro de una categoría concreta los encuestados no quisieran dar su salario, pero tenemos datos de otros de la misma categoría, por lo que podríamos deducir. 
+-   Perdidos aleatorios (MAR por sus siglas en inglés): esto es que la
+    probabilidad de encontrarse perdidos es constante según una
+    categoría observada en los datos. Por ejemplo podría ser que dentro
+    de una categoría concreta los encuestados no quisieran dar su
+    salario, pero tenemos datos de otros de la misma categoría, por lo
+    que podríamos deducir.
 
-* Perdidos no aleatorios (MNAR por sus siglas en inglés): en este caso no sabemos el mecanismo por el que los datos se encuentran perdidos, y este no es debido al azar, por lo que no podemos de hecho deducir las categorias 
+-   Perdidos no aleatorios (MNAR por sus siglas en inglés): en este caso
+    no sabemos el mecanismo por el que los datos se encuentran perdidos,
+    y este no es debido al azar, por lo que no podemos de hecho deducir
+    las categorias
 
-Si examinamos como se comportan las variables con datos perdidos en función de la variable `income`
-
+Si examinamos como se comportan las variables con datos perdidos en
+función de la variable `income`
 
 ```{r, fig.align='center', fig.cap='Datos de tipo de trabajo y salario. Se aprecia que los datos perdidos se agrupan más en la categoría de <=50k, por lo que no es totalmente aleatorio. Podríamos decir que los datos perdidos son del tipo MAR, por lo que podemos realizar la imputación de los datos. Esto ocurre también con el resto de las variables, pues es posible que exista un sesgo en el que los encuestados con menor salario tiendan a responder menos a determinados items.', out.width='75%', echo=FALSE}
 
@@ -184,9 +272,13 @@ ggplot(df, aes(workclass, fill = workclass))+
 
 ```
 
-La imputación de datos en este caso no parece estrictamente necesaria, ya que incluso sin tenerlos en cuenta queda una cantidad más que aceptable
-de datos, pero de cara a la demostración práctica para la actividad que nos ocupa, se va a llevar a cabo. Teniendo en cuenta la distribución de los
-mismos (MAR), se utilizará el método kNN (k-Nearest Neighbors) que se basa en los k datos vecinos más cercanos para asignar el valor a imputar.
+La imputación de datos en este caso no parece estrictamente necesaria,
+ya que incluso sin tenerlos en cuenta queda una cantidad más que
+aceptable de datos, pero de cara a la demostración práctica para la
+actividad que nos ocupa, se va a llevar a cabo. Teniendo en cuenta la
+distribución de los mismos (MAR), se utilizará el método kNN (k-Nearest
+Neighbors) que se basa en los k datos vecinos más cercanos para asignar
+el valor a imputar.
 
 ```{r, fig.align='center', fig.cap='Datos de tipo de trabajo y salario. Se han eliminado los valores NA, siendo sustituidos por valores cercanos a los mismos. A partir de ahora, se trabajará con este nuevo dataframe para preservar el original en caso de que tengamos dudas de si la imputación ha sido correcta', out.width='75%', echo=FALSE}
 
@@ -206,12 +298,22 @@ ggplot(df2, aes(workclass, fill = workclass))+
 
 ```
 
+La imputación con la fórmula utilizada puede crear unas variables dummy
+que indican si el valor de alguna columna para esa fila es real o
+imputado, pero teniendo el dataframe original no hace falta crear más
+variables. Sabemos que varias de éstas tienen relación entre sí
+(`education` y `education.num`, `marital.status` y `relationship`), por
+lo que vamos a eliminar una de cada pareja para reducir el número de
+variables.
 
-La imputación con la fórmula utilizada puede crear unas variables dummy que indican si el valor de alguna columna para esa fila es real o imputado, pero teniendo el dataframe original no hace falta crear más variables. Sabemos que varias de éstas tienen relación entre sí (`education` y `education.num`, `marital.status` y `relationship`), por lo que vamos a eliminar una de cada pareja para reducir el número de variables.
+Por otro lado, `capital.gain` y `capital.loss` hacen referencia a lo
+mismo, por lo que vamos a combinarlas en una sola variable.
 
-Por otro lado, `capital.gain` y `capital.loss` hacen referencia a lo mismo, por lo que vamos a combinarlas en una sola variable.
-
-La variable `fnlwgt` hace referencia al peso que tiene cada columna, es decir, un valor asignado por el censo sobre las características demográficas de dicha columna, por lo que no nos aporta información relevante para el estudio (no sirve para hacer una media ponderada or ejemplo)
+La variable `fnlwgt` hace referencia al peso que tiene cada columna, es
+decir, un valor asignado por el censo sobre las características
+demográficas de dicha columna, por lo que no nos aporta información
+relevante para el estudio (no sirve para hacer una media ponderada or
+ejemplo)
 
 ```{r}
 
@@ -226,9 +328,9 @@ df2$fnlwgt<-NULL
 
 ```
 
-Ahora tenemos 11 variables en nuestro dataframe, 4 menos que al principio, pero una de ellas, `native.country`, tiene muchas categorías dentro, por lo que vamos a reducirlas a 9 categorías más relevantes.
-
-
+Ahora tenemos 11 variables en nuestro dataframe, 4 menos que al
+principio, pero una de ellas, `native.country`, tiene muchas categorías
+dentro, por lo que vamos a reducirlas a 9 categorías más relevantes.
 
 ```{r}
 # Sustituimos los datos para agrupar categorías
@@ -264,7 +366,10 @@ table(df2$native.country)
 
 ## Detección de valores extremos (outliers)
 
-Podemos examinar dentro de las variables cuantitativas si existen datos que podrían ser considerados outliers. Podemos usar el criterio de considerar aquellas observaciones 2 veces por encima de la desviación standar como outliers.
+Podemos examinar dentro de las variables cuantitativas si existen datos
+que podrían ser considerados outliers. Podemos usar el criterio de
+considerar aquellas observaciones 2 veces por encima de la desviación
+standar como outliers.
 
 ```{r}
 # Seleccionamos las variables numéricas
@@ -278,7 +383,10 @@ df_res = reshape(df_num, varying = list(names(df_num)), times =names(df_num),
                  v.names = "value", timevar = "variable", direction = "long")
 ```
 
-En la figura 2 podemos ver la representación de los registros que sobrepasan las 2 desviaciones estandar. También podemos examinar cuales son estos datos y si tienen sentido, por ejemplo cogiendo las horas trabajadas y la edad
+En la figura 2 podemos ver la representación de los registros que
+sobrepasan las 2 desviaciones estandar. También podemos examinar cuales
+son estos datos y si tienen sentido, por ejemplo cogiendo las horas
+trabajadas y la edad
 
 ```{r}
 # Con este comando podríamos seleccionar los outliers de la edad
@@ -289,8 +397,18 @@ max(df2$age)
 max(df2$hours.per.week)
 ```
 
-Podemos ver que la edad máxima es `r max(df2$age)` que puede tener sentido si estamos hablando de una encuesta, aunque estos encuestados realmente no se encuentran en edad de trabajar. Si consideramos las horas trabajadas por semana vemos que existen algunos registros algo incongruentes pues hay individuos que refieren trabajar hasta `r max(df2$hours.per.week)`, lo cual excede el máximo de horas semanales permitidas en España, y si contamos que al menos una persona debe de dormir un mínimo de 6 horas diarias, sería estar trabajando un `r round(max(df2$hours.per.week)/((24-6)*7)*100, 2)`% del tiempo que una persona está despierta en una semana. Sin embargo supondremos que esto es correcto, dado que con las leyes laborales de EEUU puede que sean reales.
-
+Podemos ver que la edad máxima es `r max(df2$age)` que puede tener
+sentido si estamos hablando de una encuesta, aunque estos encuestados
+realmente no se encuentran en edad de trabajar. Si consideramos las
+horas trabajadas por semana vemos que existen algunos registros algo
+incongruentes pues hay individuos que refieren trabajar hasta
+`r max(df2$hours.per.week)`, lo cual excede el máximo de horas semanales
+permitidas en España, y si contamos que al menos una persona debe de
+dormir un mínimo de 6 horas diarias, sería estar trabajando un
+`r round(max(df2$hours.per.week)/((24-6)*7)*100, 2)`% del tiempo que una
+persona está despierta en una semana. Sin embargo supondremos que esto
+es correcto, dado que con las leyes laborales de EEUU puede que sean
+reales.
 
 ```{r, fig.align='center', fig.cap='Outliers. Se aprecian los datos escalados para las variables cuantitativas. Las líneas rojas discontinuas representan 2 veces la desviación estandar de la media. Se aprecia que existen muchos registros que podrían ser considerados outliers.', out.width='75%', echo=FALSE}
 # Representamos los datos
@@ -302,13 +420,14 @@ ggplot(df_res, aes(x = variable, y = value))+
 
 ```
 
-\newpage
+
 
 # Análisis de los datos
 
 ## Valores numéricos
 
-Podemos realizar un breve descriptivo de los valores numéricos presentes en los datos con el comando summary
+Podemos realizar un breve descriptivo de los valores numéricos presentes
+en los datos con el comando summary
 
 ```{r}
 # Llamamos a la función summary
@@ -316,9 +435,18 @@ Podemos realizar un breve descriptivo de los valores numéricos presentes en los
 summary(df2[,numericas])
 ```
 
-Vemos que la edad media es `r mean(df$age)`, presentando valores que van desde `r min(df$age)` a `r max(df$age)`. Podemos apreciar en la tabla anterior otros parámetros, lo cual nos da cierta informacion a priori sobre las distribuciones de los datos. Por ejemplo vemos que el valor mínimo, la mediana y el 3er cuartil de `capital.change` se encuentran en el 0. Esto debe de ser porque es una variable muy asintótica. Por el contrario vemos que los datos de `hours.per.week` se encuentran en torno a la cifra de 40, lo que indica que presentará una distribución muy leptocúrtica. 
+Vemos que la edad media es `r mean(df$age)`, presentando valores que van
+desde `r min(df$age)` a `r max(df$age)`. Podemos apreciar en la tabla
+anterior otros parámetros, lo cual nos da cierta informacion a priori
+sobre las distribuciones de los datos. Por ejemplo vemos que el valor
+mínimo, la mediana y el 3er cuartil de `capital.change` se encuentran en
+el 0. Esto debe de ser porque es una variable muy asintótica. Por el
+contrario vemos que los datos de `hours.per.week` se encuentran en torno
+a la cifra de 40, lo que indica que presentará una distribución muy
+leptocúrtica.
 
-Podemos representar las distribuciones de los datos para ver como se distribuyen
+Podemos representar las distribuciones de los datos para ver como se
+distribuyen
 
 ```{r, fig.align='center', fig.cap='Distribución de los datos numéricos. Se aprecia que los datos de la edad podrían ser normales, aunque se encuentran truncados por debajo de los 18 años. Los datos de educación se encuentran entre 8 y 9 en la mayoría de los casos, así como vemos que en las horas por semana en casi todos los casos se encuentran en 40 horas semanales. La perdida y ganacia de capital se encuentra en 0 en casi todos los casos.', out.width='75%', echo=FALSE, results='hide'}
 
@@ -334,7 +462,16 @@ par(mfrow=c(1,1))
 
 ```
 
-Podemos a continuación aplicar un test de normalidad para cada una de las variables numéricas. Normalmente podríamos emplear el test de Shapiro-Wilk para normalidad, que es un test robusto. Este test se puede llamar en R mediante la función `shapiro.test`. Sin embargo, dado que tenemos más de 5000 observaciones, el test no está implementado en R y debemos acogernos a otras opciones. Entre ellas se encuentra el test de Anderson-Darling. En este test, al igual que en el test de Shapiro-WIlk la hipótesis nula es que los datos presentan una distribución normal. El test de Anderson-Darling se encuentra implementado en el paquete `nortest` mediante la función `ad.test`
+Podemos a continuación aplicar un test de normalidad para cada una de
+las variables numéricas. Normalmente podríamos emplear el test de
+Shapiro-Wilk para normalidad, que es un test robusto. Este test se puede
+llamar en R mediante la función `shapiro.test`. Sin embargo, dado que
+tenemos más de 5000 observaciones, el test no está implementado en R y
+debemos acogernos a otras opciones. Entre ellas se encuentra el test de
+Anderson-Darling. En este test, al igual que en el test de Shapiro-WIlk
+la hipótesis nula es que los datos presentan una distribución normal. El
+test de Anderson-Darling se encuentra implementado en el paquete
+`nortest` mediante la función `ad.test`
 
 ```{r}
 # Aceptamos como significativo un alpha inferior a 0.05
@@ -377,20 +514,28 @@ testear("normal",">")
 
 ```
 
-Podemos ver que en todas las variables rechazamos la hipótesis de normalidad en todas las variables
+Podemos ver que en todas las variables rechazamos la hipótesis de
+normalidad en todas las variables
 
-Si repetimos el mismo proceso para la homocedasticidad, aplicaremos el test de Fligner, en el que la hipótesis nula es que entre los diferentes grupos las varianzas son constantes. Los grupos en este caso estarán definidos por la variable `income` que es la que deseamos predecir
+Si repetimos el mismo proceso para la homocedasticidad, aplicaremos el
+test de Fligner, en el que la hipótesis nula es que entre los diferentes
+grupos las varianzas son constantes. Los grupos en este caso estarán
+definidos por la variable `income` que es la que deseamos predecir
 
 ```{r}
 # Llamamos a la función previamente especificada
 testear("homocedasticidad","<")
 testear("homocedasticidad",">")
 ```
-Podemos ver por lo tanto que todos las variables numéricas no son normales y no son homocedásticas, por lo que tendremos que usar test no paramétricos para el estudio de las variables
+
+Podemos ver por lo tanto que todos las variables numéricas no son
+normales y no son homocedásticas, por lo que tendremos que usar test no
+paramétricos para el estudio de las variables
 
 ## Valores categóricos
 
-Podemos realizar un breve descriptivo de los valores categóricos presentes en los datos con el comando summary
+Podemos realizar un breve descriptivo de los valores categóricos
+presentes en los datos con el comando summary
 
 ```{r}
 
@@ -401,10 +546,15 @@ non_num = names(df2)[!names(df2)%in%numericas]
 summary(df2[,non_num])
 ```
 
-En este caso solo podemos ver las frecuencias de los datos, aunque vemos que los datos se encuentran muy disbalanceados. Por eemplo vemos que la mayoría de los casos `workclass` es `Private`, que está centrado en EEUU, hombres y con un `income` inferior a 50K. Respecto a su estado marital vemos que tenemos muchos que nunca se han casado 
+En este caso solo podemos ver las frecuencias de los datos, aunque vemos
+que los datos se encuentran muy disbalanceados. Por eemplo vemos que la
+mayoría de los casos `workclass` es `Private`, que está centrado en
+EEUU, hombres y con un `income` inferior a 50K. Respecto a su estado
+marital vemos que tenemos muchos que nunca se han casado
 
-Podemos realizar a continuación una breve representación gráfica de los datos, tal como se aprecia en la figura 4, comprobando que se cumplen los datos de los que hablamos con anterioridad
-
+Podemos realizar a continuación una breve representación gráfica de los
+datos, tal como se aprecia en la figura 4, comprobando que se cumplen
+los datos de los que hablamos con anterioridad
 
 ```{r, echo=FALSE, fig.align='center', fig.width=10, fig.height=10, fig.cap= 'Gráfico de barras de las variables categóricas'}
 
@@ -429,20 +579,23 @@ bar_plot = function (var) {
 
 plist = lapply(non_num, bar_plot)
 
-levels(df2$sex)
 do.call("grid.arrange", c(plist, ncol = 3))
 
 ```
 
-\newpage
-
 # Pruebas estadísticas
 
-Una vez conocidas las variables y sus distribuciones, podemos ver cual es la relación de estas variables con los datos de los ingresos y ver si existe alguna variable que se relacione de forma significativa con los ingresos. Separaremos el análisis por variables cuantitativas y variables cuantitativas. 
+Una vez conocidas las variables y sus distribuciones, podemos ver cual
+es la relación de estas variables con los datos de los ingresos y ver si
+existe alguna variable que se relacione de forma significativa con los
+ingresos. Separaremos el análisis por variables cuantitativas y
+variables cuantitativas.
 
 ## Variables cuantitativas
 
-Podemos hacer un análisis gráfico para ver si existen diferencias en alguna variable, realizando este análisis gráfico mediante boxplots, tal como se ve en la figura 5.
+Podemos hacer un análisis gráfico para ver si existen diferencias en
+alguna variable, realizando este análisis gráfico mediante boxplots, tal
+como se ve en la figura 5.
 
 ```{r,  fig.align='center', fig.cap='Boxplot de las variables cuantitativas respecto a income. Visualmente parece que la gente más mayor es la que tiene salarios más altos, también los que han estudiado más años y los que trabajan más horas por semana', out.width='75%', echo=FALSE}
 boxplot_cust = function (var) {
@@ -457,7 +610,14 @@ plist = lapply(numericas, boxplot_cust)
 do.call("grid.arrange", c(plist, ncol = 3))
 ```
 
-Sin embargo para el análisis es necesaria la realización de tests estadísticos. En este caso como sabemos que las variables no son normales y además no se cumple la hipótesis de la homocedasticidad, debemos usar test no paramétricos. Para la comparación de dos muestras podríamos usar el test de Wilcoxon. Para representar los datos podemos realizar una tabla en la que mostremos la mediana y rango intercuartílico de cada una de las variables junto al valor de p correspondiente. 
+Sin embargo para el análisis es necesaria la realización de tests
+estadísticos. En este caso como sabemos que las variables no son
+normales y además no se cumple la hipótesis de la homocedasticidad,
+debemos usar test no paramétricos. Para la comparación de dos muestras
+podríamos usar el test de Wilcoxon. Para representar los datos podemos
+realizar una tabla en la que mostremos la mediana y rango
+intercuartílico de cada una de las variables junto al valor de p
+correspondiente.
 
 ```{r}
 
@@ -482,7 +642,13 @@ rownames(tabla)<-numericas
 colnames(tabla)<-c(levels(df2$income), "p valor")
 ```
 
-Podemos ver que todas las variables estudiadas en este caso muestran diferencias estadísticamente significativas (tabla 1), si bien llama la atención que existan diferencias en variables como `capital.gain` y `capital.loss` en las que presentan una distribución en torno al 0. Probablemente las diferencias en estos grupos se justifiquen por los outliers, tal como se puede apreciar en los boxplots realizados con anterioridad
+Podemos ver que todas las variables estudiadas en este caso muestran
+diferencias estadísticamente significativas (tabla 1), si bien llama la
+atención que existan diferencias en variables como `capital.gain` y
+`capital.loss` en las que presentan una distribución en torno al 0.
+Probablemente las diferencias en estos grupos se justifiquen por los
+outliers, tal como se puede apreciar en los boxplots realizados con
+anterioridad
 
 ```{r, echo =FALSE}
 kable(tabla, booktabs = T, align = "c", 
@@ -492,12 +658,19 @@ kable(tabla, booktabs = T, align = "c",
 
 ## Variables cualitativas
 
-Para el estudio de las variables cualitativas podemos realizar de nuevo una representación gráfica, para ver si existen diferencias entre los grupos, para posteriormente realizar los contrastes correspondientes. No mostraremos los porcentajes por cada una de las categorías ya que hay en muchos casos en los que existen variables con muchos grupos. 
+Para el estudio de las variables cualitativas podemos realizar de nuevo
+una representación gráfica, para ver si existen diferencias entre los
+grupos, para posteriormente realizar los contrastes correspondientes. No
+mostraremos los porcentajes por cada una de las categorías ya que hay en
+muchos casos en los que existen variables con muchos grupos.
 
-Esto se puede apreciar claramente en la gráfica 6, donde podemos ver que los hombres blancos con mayor educación y que son autonomos, o que son los maridos, tienen una mayor probabilidad de ganar más de 50 K. 
+Esto se puede apreciar claramente en la gráfica 6, donde podemos ver que
+los hombres blancos con mayor educación y que son autonomos, o que son
+los maridos, tienen una mayor probabilidad de ganar más de 50 K.
 
-De cara a la realización del análisis estadístico es necesario realizar un test de $\chi^2$ (chi cuadrado), si bien si en alguna de las casillas existe algún valor inferior a 5 se aplicará el test de fisher
-
+De cara a la realización del análisis estadístico es necesario realizar
+un test de $\chi^2$ (chi cuadrado), si bien si en alguna de las casillas
+existe algún valor inferior a 5 se aplicará el test de fisher
 
 ```{r}
 
@@ -549,7 +722,6 @@ ggplot(df, aes(x = fct_infreq(sex), fill = income))+
   theme(legend.position = "none")
 ```
 
-
 ```{r, echo=FALSE, fig.align='center', fig.width=10, fig.height=12, fig.cap= 'Gráfico de barras de las variables categóricas. En verde se muestran los encuestados que ganan <=50K y en marrón los que ganan más de 50K', warning=FALSE}
 
 barplot_group = function (var) {
@@ -579,10 +751,14 @@ do.call("grid.arrange", c(plist, ncol = nCol))
 
 ## Modelo de regresión logística
 
-Podemos intentar ajustar un modelo de cara a predecir con las variables anteriores el sueldo. Un acercamiento simple al problema puede ser el ajuste de una regresión logística binomial para la predicción de la variable `income`.
+Podemos intentar ajustar un modelo de cara a predecir con las variables
+anteriores el sueldo. Un acercamiento simple al problema puede ser el
+ajuste de una regresión logística binomial para la predicción de la
+variable `income`.
 
-Se crea el modelo predictivo utilizando todas las variables del set, creando una variable binomial a partir del income y exceptuando income  (ya que el programa ve la relación directa que hay con esa variable).
-
+Se crea el modelo predictivo utilizando todas las variables del set,
+creando una variable binomial a partir del income y exceptuando income
+(ya que el programa ve la relación directa que hay con esa variable).
 
 ```{r}
 
@@ -609,11 +785,22 @@ modeloLR<-glm(Less50~. - income, data = training_set, family = binomial)
 summary(modeloLR)
 ```
 
-En lo que respecta a las variables explicativas, las variables continuas (`age`, `hours.per.week`, `capital.change` y el `education.level`) influyen significativamente en la probabilidad de tener un salario. En cuanto al resto de variables, se puede apreciar la contribución del `sex` (Male > Female), `race` (White> todas menos islander pacific que no es significativo), `work-class` (Private, aunque federal gov es significativamente mayor), `marital_status` (Married mayor que todas) y  `ocuppation` (Exec-managerial mayor que todas). Además se aprecia que los norteamericanos tienen sueldos superiores al resto de nacionalidades, excepto que asiaticos y europeos, donde no se aprecian diferencias significativas
+En lo que respecta a las variables explicativas, las variables continuas
+(`age`, `hours.per.week`, `capital.change` y el `education.level`)
+influyen significativamente en la probabilidad de tener un salario. En
+cuanto al resto de variables, se puede apreciar la contribución del
+`sex` (Male \> Female), `race` (White\> todas menos islander pacific que
+no es significativo), `work-class` (Private, aunque federal gov es
+significativamente mayor), `marital_status` (Married mayor que todas) y
+`ocuppation` (Exec-managerial mayor que todas). Además se aprecia que
+los norteamericanos tienen sueldos superiores al resto de
+nacionalidades, excepto que asiaticos y europeos, donde no se aprecian
+diferencias significativas
 
-
-Ahora, vamos a comprobar el modelo para predecir el resultado del testing_set, es decir, con datos no utilizados para entrenar el modelo. Luego, factorizamos la  probabilidad optenida como 1 o 0, de manera que cuadre con el formato esperado
-
+Ahora, vamos a comprobar el modelo para predecir el resultado del
+testing_set, es decir, con datos no utilizados para entrenar el modelo.
+Luego, factorizamos la probabilidad optenida como 1 o 0, de manera que
+cuadre con el formato esperado
 
 ```{r}
 # Predecimos los datos 
@@ -623,32 +810,90 @@ prediccion_test<-predict(modeloLR, testing_set)
 prediccion_test<-ifelse(prediccion_test>=0.5,1,0)
 ```
 
-Una vez se tiene la predicción, se crea la matriz de confusión (se pasan tanto los datos como la referencia como factor, para evitar  problemas de formato)
+Una vez se tiene la predicción, se crea la matriz de confusión (se pasan
+tanto los datos como la referencia como factor, para evitar problemas de
+formato)
 
 ```{r}
 table(as.factor(prediccion_test), as.factor(testing_set$Less50))
 ```
-Se puede observar que el modelo hace un buen trabajo a priori, siendo la mayor 0 predichos como les corresponde. Para analizar de manera cuantificable la predicción del modelo, se calculan la sensitividad y sensibilidad. No utilizaremos las funciones por defecto para realizar estos cálculos ya que toman el 0 como positivo y el 1 como negativo.
 
+Se puede observar que el modelo hace un buen trabajo a priori, siendo la
+mayor 0 predichos como les corresponde. Para analizar de manera
+cuantificable la predicción del modelo, se calculan la sensitividad y
+sensibilidad. No utilizaremos las funciones por defecto para realizar
+estos cálculos ya que toman el 0 como positivo y el 1 como negativo.
 
-La sensibilidad es el ratio de los positivos, es decir positivos verdaderos / (positivos verdaderos + falsos negativos), es decir, cuantos casos negativos se asocian erróneamente con un positivo (en este caso, solo `r (4736)/(4736+895)` de los casos asignados como negativos  por el modelo son en realidad positivos).
+La sensibilidad es el ratio de los positivos, es decir positivos
+verdaderos / (positivos verdaderos + falsos negativos), es decir,
+cuantos casos negativos se asocian erróneamente con un positivo (en este
+caso, solo `r (4736)/(4736+895)` de los casos asignados como negativos
+por el modelo son en realidad positivos).
 
-La especificidad es el ratio de los negativos, es decir negativos verdaderos / (negativos verdaderos + falsos positivos), es decir, cuantos casos positivos se asocian erróneamente con un negativo (en este caso, solo `r (699)/(699+183)` de los casos asignados como positivos por el modelo son en realidad negativos). En este caso se comprueba que el modelo no hace tan buen trabajo, por lo que seguramente habría que revisar de nuevo qué datos no han sido significativos en el modelo, y realizar alguna transformación para mejorar el resultado obtenido.
-
+La especificidad es el ratio de los negativos, es decir negativos
+verdaderos / (negativos verdaderos + falsos positivos), es decir,
+cuantos casos positivos se asocian erróneamente con un negativo (en este
+caso, solo `r (699)/(699+183)` de los casos asignados como positivos por
+el modelo son en realidad negativos). En este caso se comprueba que el
+modelo no hace tan buen trabajo, por lo que seguramente habría que
+revisar de nuevo qué datos no han sido significativos en el modelo, y
+realizar alguna transformación para mejorar el resultado obtenido.
 
 # Conclusiones
 
-Se han sometido los datos a un preprocesamiento para manejar los casos de  elementos vacíos y valores extremos (outliers). Para el caso delos primeros, tras analizar su distribución (MAR), se ha elegido la imputación de los valores basándonos en los valores similares a los perdidos (o más próximos), de manera que no se eliminen los registros, pero manteniendo la base de datos sin alterar por si hubiese hecho falta
-una revisión de los valores imputados. Para el caso del segundo, debido al estado de las leyes laborales de EEUU, se ha optado por incluirlos, ya que no tenemos la certeza de que esos extremos sean imposibles, y eliminar los valores sin un respaldo no parece la opción más correcta. 
+Se han sometido los datos a un preprocesamiento para manejar los casos
+de elementos vacíos y valores extremos (outliers). Para el caso delos
+primeros, tras analizar su distribución (MAR), se ha elegido la
+imputación de los valores basándonos en los valores similares a los
+perdidos (o más próximos), de manera que no se eliminen los registros,
+pero manteniendo la base de datos sin alterar por si hubiese hecho falta
+una revisión de los valores imputados. Para el caso del segundo, debido
+al estado de las leyes laborales de EEUU, se ha optado por incluirlos,
+ya que no tenemos la certeza de que esos extremos sean imposibles, y
+eliminar los valores sin un respaldo no parece la opción más correcta.
 
-Posteriormente, se ha llevado a cabo un análisis de las variables, reduciendo la dimensionalidad eliminando aquellas que eran redundantes o no aportaban información relevante y agrupando las categorías de las variables no numéricas para reducirlas sin perder información relevante. También se han explorado las variables de valores numéricos, estudiando su normalidad y homocedasticidad, así como la distribución de las variables categóricas mediante gráficas.
+Posteriormente, se ha llevado a cabo un análisis de las variables,
+reduciendo la dimensionalidad eliminando aquellas que eran redundantes o
+no aportaban información relevante y agrupando las categorías de las
+variables no numéricas para reducirlas sin perder información relevante.
+También se han explorado las variables de valores numéricos, estudiando
+su normalidad y homocedasticidad, así como la distribución de las
+variables categóricas mediante gráficas.
 
-Una vez conocidas las variables y sus distribuciones, se ha procedido a estudiar la significancia de ambos tipos de variables con respecto a `income`. Para las cuantitativas, dada la falta de normalidad y homocedasticidad, se ha utilizado el test de Wilcoxon, un test no paramétrico, para la comparación de dos muestras. Para las cualitativas, se ha realizado un test de $\chi^2$ (chi cuadrado), si bien si en alguna de las  casillas existe algún valor inferior a 5 se ha aplicado el test de fisher.
+Una vez conocidas las variables y sus distribuciones, se ha procedido a
+estudiar la significancia de ambos tipos de variables con respecto a
+`income`. Para las cuantitativas, dada la falta de normalidad y
+homocedasticidad, se ha utilizado el test de Wilcoxon, un test no
+paramétrico, para la comparación de dos muestras. Para las cualitativas,
+se ha realizado un test de $\chi^2$ (chi cuadrado), si bien si en alguna
+de las casillas existe algún valor inferior a 5 se ha aplicado el test
+de fisher.
 
-Finalmente, se ha utilizado un modelo de regresión logística primero para adaptarlo al set de entrenamiento, y luego se ha comprobado su eficacia prediciendo los resultados esperados con los datos de test, así como se ha comprobado dichos resultados midiendo tanto su sensibilidad como sensitividad. En el caso de estudio, no tiene porque haber ninguna preferencia de cara a mejorar una de estas estadísticas en detrimento  de la otra, pero dependiendo del uso que se le vaya a dar al modelo, puede ser interesante. Por ejemplo, si se van a usar para la concesión  o no de créditos solamente a las pesonas con un salario anual mayor que 50k, deberíamos ponderar cuanto nos interesa la cantidad de créditos que otorgamos frente a otorgarlos a gente que en realidad no cumpla la condición (en otras utilidades, como en datos utilizados para  predecir enfermedades, las consecuencias de un falso negativo y de un falso positivo pueden tener consecuencias muy diferentes).
+Finalmente, se ha utilizado un modelo de regresión logística primero
+para adaptarlo al set de entrenamiento, y luego se ha comprobado su
+eficacia prediciendo los resultados esperados con los datos de test, así
+como se ha comprobado dichos resultados midiendo tanto su sensibilidad
+como sensitividad. En el caso de estudio, no tiene porque haber ninguna
+preferencia de cara a mejorar una de estas estadísticas en detrimento de
+la otra, pero dependiendo del uso que se le vaya a dar al modelo, puede
+ser interesante. Por ejemplo, si se van a usar para la concesión o no de
+créditos solamente a las pesonas con un salario anual mayor que 50k,
+deberíamos ponderar cuanto nos interesa la cantidad de créditos que
+otorgamos frente a otorgarlos a gente que en realidad no cumpla la
+condición (en otras utilidades, como en datos utilizados para predecir
+enfermedades, las consecuencias de un falso negativo y de un falso
+positivo pueden tener consecuencias muy diferentes).
 
+# Contribuciones
 
+| Contribuciones              | Firma                         |
+|-----------------------------|-------------------------------|
+| Investigación Previa        | Adrián Valls, Javier Herrero  |
+| Redacción de las respuestas | Adrián Valls, Javier Herrero  |
+| Desarrollo del código       | Adrián Valls, Javier Herrero  |
+| Participación en el video   | Adrián Valls, Javier Herrero  |
 
 # Bibliografía
 
 <div id="refs"></div>
+
